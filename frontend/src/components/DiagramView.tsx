@@ -16,11 +16,15 @@ type DiagramType = 'mermaid' | 'plantuml' | 'textual';
 
 const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
   const [activeType, setActiveType] = useState<DiagramType>('mermaid');
-  const [isRendering, setIsRendering] = useState(false);
+  const [isMermaidInitialized, setIsMermaidInitialized] = useState(false);
+  const [mermaidSvg, setMermaidSvg] = useState<string>('');
+  const [isRenderingMermaid, setIsRenderingMermaid] = useState(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
   const mermaidRef = useRef<HTMLDivElement>(null);
 
   // Initialize Mermaid
   useEffect(() => {
+    console.log('🎨 Initializing Mermaid...');
     mermaid.initialize({
       startOnLoad: false,
       theme: 'default',
@@ -36,35 +40,62 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
         tertiaryColor: '#ffffff',
       },
     });
+    
+    setIsMermaidInitialized(true);
+    console.log('🎨 Mermaid initialized');
   }, []);
 
-  // Render Mermaid diagram
+
+
+  // Render Mermaid diagram as soon as data and initialization are ready
   useEffect(() => {
-    if (activeType === 'mermaid' && mermaidRef.current && erdDiagram.mermaid) {
-      setIsRendering(true);
-      const renderDiagram = async () => {
-        try {
-          const { svg } = await mermaid.render('mermaid-diagram', erdDiagram.mermaid);
-          if (mermaidRef.current) {
-            mermaidRef.current.innerHTML = svg;
-          }
-        } catch (error) {
-          console.error('Error rendering Mermaid diagram:', error);
-          if (mermaidRef.current) {
-            mermaidRef.current.innerHTML = `
-              <div class="text-center p-8 text-red-600">
-                <p>Error rendering diagram</p>
-                <p class="text-sm mt-2">${error}</p>
-              </div>
-            `;
-          }
-        } finally {
-          setIsRendering(false);
-        }
-      };
-      renderDiagram();
+    const renderMermaidDiagram = async () => {
+      if (!isMermaidInitialized || !erdDiagram.mermaid || mermaidSvg || isRenderingMermaid) {
+        console.log('🎨 Skipping Mermaid render:', {
+          initialized: isMermaidInitialized,
+          hasCode: !!erdDiagram.mermaid,
+          alreadyRendered: !!mermaidSvg,
+          currentlyRendering: isRenderingMermaid
+        });
+        return;
+      }
+
+      console.log('🎨 Starting background Mermaid diagram render...');
+      setIsRenderingMermaid(true);
+      setRenderError(null);
+
+      try {
+        // Generate unique ID for each render to avoid conflicts
+        const diagramId = `mermaid-diagram-${Date.now()}`;
+        
+        console.log('🎨 Rendering Mermaid with ID:', diagramId);
+        
+        const { svg } = await mermaid.render(diagramId, erdDiagram.mermaid);
+        
+        console.log('🎨 Mermaid render successful, SVG length:', svg.length);
+        
+        // Store the SVG in state
+        setMermaidSvg(svg);
+        console.log('🎨 Mermaid diagram ready and stored in state');
+      } catch (error) {
+        console.error('❌ Error rendering Mermaid diagram:', error);
+        const errorMessage = String(error);
+        setRenderError(errorMessage);
+      } finally {
+        setIsRenderingMermaid(false);
+      }
+    };
+
+    renderMermaidDiagram();
+  }, [isMermaidInitialized, erdDiagram.mermaid, mermaidSvg, isRenderingMermaid]);
+
+  // Update the DOM when SVG is ready and ref is available
+  useEffect(() => {
+    if (mermaidSvg && mermaidRef.current && activeType === 'mermaid') {
+      console.log('🎨 Inserting SVG into DOM element');
+      mermaidRef.current.innerHTML = mermaidSvg;
     }
-  }, [activeType, erdDiagram.mermaid]);
+  }, [mermaidSvg, activeType]);
 
   const handleCopy = async (content: string) => {
     const success = await utils.copyToClipboard(content);
@@ -192,15 +223,34 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
           {activeType === 'mermaid' && (
             <div className="space-y-4">
               <div className="bg-white border border-secondary-200 rounded-lg p-4 overflow-auto">
-                {isRendering ? (
+                {!mermaidSvg || isRenderingMermaid ? (
                   <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                       <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                      <p className="text-sm text-secondary-500">Rendering diagram...</p>
+                      <p className="text-sm text-secondary-500">
+                        {!isMermaidInitialized ? 'Initializing diagram engine...' : 
+                         isRenderingMermaid ? 'Generating diagram...' : 
+                         !mermaidSvg ? 'Preparing diagram...' : 'Loading diagram...'}
+                      </p>
+                      {/* Debug info in development */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <div className="mt-4 text-xs text-gray-400">
+                          <div>Init: {isMermaidInitialized ? '✅' : '❌'}</div>
+                          <div>Rendered: {mermaidSvg ? '✅' : '❌'}</div>
+                          <div>Rendering: {isRenderingMermaid ? '✅' : '❌'}</div>
+                          <div>Code: {erdDiagram.mermaid ? '✅' : '❌'}</div>
+                          {renderError && <div className="text-red-500">Error: {renderError}</div>}
+                        </div>
+                      )}
                     </div>
                   </div>
+                ) : renderError ? (
+                  <div className="text-center p-8 text-red-600">
+                    <p>Error rendering diagram</p>
+                    <p className="text-sm mt-2">{renderError}</p>
+                  </div>
                 ) : (
-                  <div ref={mermaidRef} className="mermaid-container" />
+                  <div ref={mermaidRef} className="mermaid-container" style={{ minHeight: '200px' }} />
                 )}
               </div>
               
