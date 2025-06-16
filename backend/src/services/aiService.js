@@ -2,29 +2,23 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 class AIService {
   constructor() {
-    this.validateApiKey();
-  }
-
-  validateApiKey() {
-    if (!process.env.GEMINI_API_KEY) {
+    // Check for API key in either environment variable
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+    
+    if (!apiKey) {
       console.warn('⚠️ GEMINI_API_KEY not found. AI features will be limited.');
       console.log('📝 To enable AI features:');
       console.log('   1. Get API key from: https://makersuite.google.com/app/apikey');
       console.log('   2. Add to backend/.env: GEMINI_API_KEY=your_key_here');
       console.log('   3. Restart the server');
-      this.genAI = null;
       return;
     }
 
     try {
-      this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      console.log('✅ Gemini API key configured successfully');
-      // Test the API key with a simple call
-      this.testApiKey();
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      console.log('✅ AI service initialized successfully');
     } catch (error) {
-      console.error('❌ Failed to initialize Gemini AI:', error.message);
-      console.log('🔍 Check if your API key is valid and has proper permissions');
-      this.genAI = null;
+      console.error('❌ Error initializing AI service:', error.message);
     }
   }
 
