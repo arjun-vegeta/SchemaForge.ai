@@ -189,15 +189,15 @@ export const utils = {
     return [
       "I need to store user profiles with name, email, and age, and also product details with name, price, and description",
       
-      "Create a library management system with books (title, author, ISBN, publication year), authors (name, biography, birth date), users (name, email, membership date), and borrowing records (borrow date, return date)",
+      "I need an elearning portal where students can register to courses, teachers can accept or reject, and the portal has learning streaks for each student",
       
-      "Build a blog platform with posts (title, content, published date), authors (name, bio, avatar), categories (name, description), and comments (content, timestamp, author)",
+      "I want to build a simple healthcare system management app where doctors can write prescriptions, patients can book slots, and doctors can accept or reject them",
       
       "Design an e-commerce system with products (name, price, description, stock), customers (name, email, address), orders (order date, total), and order items (quantity, price)",
       
       "Create a task management system with projects (name, description, deadline), tasks (title, description, status, priority), users (name, email, role), and time tracking (hours, date, description)",
       
-      "Build a social media platform with users (username, email, bio, avatar), posts (content, timestamp, likes), comments (content, timestamp), and friendships (status, created date)"
+      "I want to create a simple restaurant app where customers can place orders, chefs can see the orders and mark them as ready, and managers can track daily sales"
     ];
   },
 
