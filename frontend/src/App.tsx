@@ -29,9 +29,8 @@ function App() {
     const checkApiStatus = async () => {
       try {
         const health = await apiService.healthCheck();
-        if (health.ai?.enabled) {
+        if (health.ai?.status === 'CONFIGURED') {
           console.log('✅ AI API Key Status: CONFIGURED');
-          console.log(`🤖 AI Provider: ${health.ai.provider}`);
           console.log('🚀 Full AI features available');
         } else {
           console.log('⚠️ AI API Key Status: NOT CONFIGURED');

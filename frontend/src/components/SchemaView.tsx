@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Download, FileText, Database, Eye, Code } from 'lucide-react';
+import { Copy, Download, FileText, Database, Code } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { JsonSchema, ParsedData } from '../types';

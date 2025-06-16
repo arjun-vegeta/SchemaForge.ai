@@ -3,13 +3,14 @@ const router = express.Router();
 
 // Health check endpoint
 router.get('/', (req, res) => {
-  const hasApiKey = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY);
-  
+  const hasApiKey = !!process.env.GEMINI_API_KEY;
   res.json({
     status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    aiEnabled: hasApiKey
+    message: 'Schema API Generator is running',
+    ai: {
+      status: hasApiKey ? 'CONFIGURED' : 'NOT CONFIGURED',
+      message: hasApiKey ? 'AI features are enabled' : 'AI features are disabled'
+    }
   });
 });
 

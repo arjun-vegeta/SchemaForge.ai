@@ -46,13 +46,10 @@ export const apiService = {
   // Health check
   async healthCheck(): Promise<{ 
     status: string; 
-    timestamp: string; 
-    uptime: number;
-    environment: string;
+    message: string;
     ai?: {
-      enabled: boolean;
-      provider: string;
       status: string;
+      message: string;
     };
   }> {
     const response = await apiClient.get('/health');
