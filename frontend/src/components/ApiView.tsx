@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Copy, Download, Globe, Code, Book, Terminal } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Copy, Download, Globe, Code, Book, Terminal, ChevronDown } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ApiEndpoint, Entity } from '../types';
@@ -16,6 +16,35 @@ type ViewType = 'overview' | 'openapi' | 'javascript' | 'python' | 'curl';
 const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
   const [activeView, setActiveView] = useState<ViewType>('overview');
   const [selectedEntity, setSelectedEntity] = useState<string>(entities[0]?.name || '');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Memoize the heavy JSON stringification
+  const formattedOpenApiSpec = useMemo(() => {
+    return JSON.stringify(apiEndpoints.openApiSpec, null, 2);
+  }, [apiEndpoints.openApiSpec]);
+
+  // Handle tab switching with loading state
+  const handleTabSwitch = (newView: ViewType) => {
+    if (newView === activeView) return;
+    
+    if (newView === 'openapi') {
+      setIsLoading(true);
+      setActiveView(newView);
+      // Use setTimeout to allow the UI to update and show the loader
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
+    } else {
+      setActiveView(newView);
+    }
+  };
+
+  // Reset loading state when component mounts or activeView changes away from openapi
+  useEffect(() => {
+    if (activeView !== 'openapi') {
+      setIsLoading(false);
+    }
+  }, [activeView]);
 
   const handleCopy = async (content: string) => {
     const success = await utils.copyToClipboard(content);
@@ -28,7 +57,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
 
   const handleDownload = () => {
     const content = activeView === 'openapi' 
-      ? apiEndpoints.openApiSpec 
+      ? formattedOpenApiSpec 
       : getCodeContent();
     const filename = `api-${activeView}-${Date.now()}.${getFileExtension()}`;
     utils.downloadAsFile(content, filename, activeView === 'openapi' ? 'json' : 'text');
@@ -50,7 +79,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
           .map(([operation, code]) => `# ${operation}\n${code}`)
           .join('\n\n');
       default:
-        return JSON.stringify(apiEndpoints.openApiSpec, null, 2);
+        return formattedOpenApiSpec;
     }
   };
 
@@ -136,7 +165,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveView(tab.id)}
+                  onClick={() => handleTabSwitch(tab.id)}
                   className={`flex items-center space-x-2 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeView === tab.id
                       ? 'border-primary-500 text-primary-600'
@@ -153,29 +182,42 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
         </div>
 
         <div className="p-4 sm:p-6">
+          {/* Loading state */}
+          {isLoading && activeView === 'openapi' && (
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center space-x-3">
+                <div className="w-6 h-6 spinner" />
+                <span className="text-secondary-600">Loading OpenAPI specification...</span>
+              </div>
+            </div>
+          )}
+
           {/* Entity selector for code examples */}
-          {['javascript', 'python', 'curl'].includes(activeView) && (
+          {['javascript', 'python', 'curl'].includes(activeView) && !isLoading && (
             <div className="mb-4">
               <label htmlFor="entity-select" className="block text-sm font-medium text-secondary-700 mb-2">
                 Select Entity
               </label>
-              <select
-                id="entity-select"
-                value={selectedEntity}
-                onChange={(e) => setSelectedEntity(e.target.value)}
-                className="form-input w-full sm:w-auto"
-              >
-                {entities.map((entity) => (
-                  <option key={entity.name} value={entity.name}>
-                    {entity.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative w-full sm:w-auto">
+                <select
+                  id="entity-select"
+                  value={selectedEntity}
+                  onChange={(e) => setSelectedEntity(e.target.value)}
+                  className="block w-full sm:w-auto px-3 py-2 pr-8 border border-secondary-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base appearance-none"
+                >
+                  {entities.map((entity) => (
+                    <option key={entity.name} value={entity.name}>
+                      {entity.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-500 pointer-events-none" />
+              </div>
             </div>
           )}
 
           {/* Overview */}
-          {activeView === 'overview' && (
+          {activeView === 'overview' && !isLoading && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-secondary-50 p-4 rounded-lg">
@@ -237,7 +279,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
           )}
 
           {/* OpenAPI Specification */}
-          {activeView === 'openapi' && (
+          {activeView === 'openapi' && !isLoading && (
             <div className="space-y-4">
               <div className="bg-secondary-50 p-4 rounded-lg">
                 <p className="text-sm text-secondary-600">
@@ -255,14 +297,14 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                     borderRadius: '0.5rem',
                   }}
                 >
-                  {JSON.stringify(apiEndpoints.openApiSpec, null, 2)}
+                  {formattedOpenApiSpec}
                 </SyntaxHighlighter>
               </div>
             </div>
           )}
 
           {/* Code Examples */}
-          {['javascript', 'python', 'curl'].includes(activeView) && (
+          {['javascript', 'python', 'curl'].includes(activeView) && !isLoading && (
             <div className="space-y-4">
               <div className="bg-secondary-50 p-4 rounded-lg">
                 <p className="text-sm text-secondary-600">

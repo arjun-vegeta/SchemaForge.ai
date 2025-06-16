@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Copy, Download, FileText, Database, Code } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -15,6 +15,39 @@ type ViewType = 'entities' | 'schema' | 'raw';
 
 const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) => {
   const [activeView, setActiveView] = useState<ViewType>('entities');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Memoize the heavy JSON stringification
+  const formattedJsonSchema = useMemo(() => {
+    return JSON.stringify(jsonSchema, null, 2);
+  }, [jsonSchema]);
+
+  const formattedParsedEntities = useMemo(() => {
+    return JSON.stringify(parsedEntities, null, 2);
+  }, [parsedEntities]);
+
+  // Handle tab switching with loading state
+  const handleTabSwitch = (newView: ViewType) => {
+    if (newView === activeView) return;
+    
+    if (newView === 'schema' || newView === 'raw') {
+      setIsLoading(true);
+      setActiveView(newView);
+      // Use setTimeout to allow the UI to update and show the loader
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
+    } else {
+      setActiveView(newView);
+    }
+  };
+
+  // Reset loading state when component mounts or activeView changes away from heavy tabs
+  useEffect(() => {
+    if (activeView !== 'schema' && activeView !== 'raw') {
+      setIsLoading(false);
+    }
+  }, [activeView]);
 
   const handleCopy = async (content: string) => {
     const success = await utils.copyToClipboard(content);
@@ -26,9 +59,21 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
   };
 
   const handleDownload = () => {
-    const content = activeView === 'raw' ? jsonSchema : parsedEntities;
+    const content = activeView === 'raw' ? parsedEntities : 
+                   activeView === 'schema' ? jsonSchema : parsedEntities;
     const filename = `schema-${Date.now()}.json`;
     utils.downloadAsFile(content, filename, 'json');
+  };
+
+  const getContentForCopy = () => {
+    switch (activeView) {
+      case 'schema':
+        return formattedJsonSchema;
+      case 'raw':
+        return formattedParsedEntities;
+      default:
+        return formattedParsedEntities;
+    }
   };
 
   const tabs = [
@@ -52,7 +97,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
           </div>
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
-              onClick={() => handleCopy(JSON.stringify(activeView === 'raw' ? jsonSchema : parsedEntities, null, 2))}
+              onClick={() => handleCopy(getContentForCopy())}
               className="btn-outline flex items-center space-x-2 flex-1 sm:flex-none justify-center"
             >
               <Copy className="w-4 h-4" />
@@ -96,7 +141,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveView(tab.id)}
+                  onClick={() => handleTabSwitch(tab.id)}
                   className={`flex items-center space-x-2 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeView === tab.id
                       ? 'border-primary-500 text-primary-600'
@@ -112,8 +157,20 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
         </div>
 
         <div className="p-4 sm:p-6">
+          {/* Loading state */}
+          {isLoading && (activeView === 'schema' || activeView === 'raw') && (
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center space-x-3">
+                <div className="w-6 h-6 spinner" />
+                <span className="text-secondary-600">
+                  Loading {activeView === 'schema' ? 'JSON schema' : 'raw data'}...
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Entities View */}
-          {activeView === 'entities' && (
+          {activeView === 'entities' && !isLoading && (
             <div className="space-y-6">
               {parsedEntities.entities.map((entity) => (
                 <div key={entity.name} className="border border-secondary-200 rounded-lg p-4 sm:p-6">
@@ -240,7 +297,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
           )}
 
           {/* JSON Schema View */}
-          {activeView === 'schema' && (
+          {activeView === 'schema' && !isLoading && (
             <div className="space-y-4">
               <div className="bg-secondary-50 p-4 rounded-lg">
                 <p className="text-sm text-secondary-600">
@@ -258,14 +315,14 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                     borderRadius: '0.5rem',
                   }}
                 >
-                  {JSON.stringify(jsonSchema, null, 2)}
+                  {formattedJsonSchema}
                 </SyntaxHighlighter>
               </div>
             </div>
           )}
 
           {/* Raw Data View */}
-          {activeView === 'raw' && (
+          {activeView === 'raw' && !isLoading && (
             <div className="space-y-4">
               <div className="bg-secondary-50 p-4 rounded-lg">
                 <p className="text-sm text-secondary-600">
@@ -283,7 +340,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                     borderRadius: '0.5rem',
                   }}
                 >
-                  {JSON.stringify(parsedEntities, null, 2)}
+                  {formattedParsedEntities}
                 </SyntaxHighlighter>
               </div>
             </div>
