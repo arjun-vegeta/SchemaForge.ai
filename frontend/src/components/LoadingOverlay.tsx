@@ -1,5 +1,6 @@
-import React from 'react';
-import { Loader2, Brain, FileText, Globe, Network } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Loader2, Brain, FileText, Globe, Network, Wifi, AlertTriangle } from 'lucide-react';
+import { subscribeToServerStatus, ServerStatus } from '../services/api';
 
 interface LoadingOverlayProps {
   stage: 'parsing' | 'schema' | 'api' | 'diagram' | 'complete' | null;
@@ -7,7 +8,33 @@ interface LoadingOverlayProps {
 }
 
 const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ stage, progress }) => {
+  const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToServerStatus(setServerStatus);
+    return unsubscribe;
+  }, []);
+
   const getStageInfo = (currentStage: string | null) => {
+    // If server is waking up, show that status instead
+    if (serverStatus?.isWakingUp) {
+      return {
+        icon: Wifi,
+        title: 'Server is waking up...',
+        description: 'The server was sleeping and is now starting up. This may take up to 60 seconds.',
+        color: 'text-amber-500',
+      };
+    }
+
+    // If server appears to be sleeping, show that status
+    if (serverStatus && !serverStatus.isAwake) {
+      return {
+        icon: AlertTriangle,
+        title: 'Connecting to server...',
+        description: 'The server may be sleeping. Attempting to wake it up...',
+        color: 'text-orange-500',
+      };
+    }
     switch (currentStage) {
       case 'parsing':
         return {
@@ -80,14 +107,32 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ stage, progress }) => {
           
           <div className="w-full bg-secondary-200 rounded-full h-2 mb-2">
             <div
-              className="bg-primary-600 h-2 rounded-full transition-all duration-1000 ease-out"
+              className={`h-2 rounded-full transition-all duration-1000 ease-out ${
+                serverStatus?.isWakingUp ? 'bg-amber-500' : 
+                serverStatus && !serverStatus.isAwake ? 'bg-orange-500' : 
+                'bg-primary-600'
+              }`}
               style={{ width: `${progress}%` }}
             />
           </div>
           
           <div className="text-sm text-secondary-500">
-            {progress}% complete
+            {serverStatus?.isWakingUp 
+              ? 'Waking up server...' 
+              : serverStatus && !serverStatus.isAwake 
+              ? 'Connecting to server...' 
+              : `${progress}% complete`}
           </div>
+
+          {/* Additional server status info */}
+          {(serverStatus?.isWakingUp || (serverStatus && !serverStatus.isAwake)) && (
+            <div className="mt-3 text-xs text-secondary-400 bg-secondary-50 rounded p-2">
+              <p>
+                💡 <strong>Free hosting tip:</strong> Our server sleeps after 15 minutes of inactivity 
+                to save resources. The first request wakes it up, which takes about 30-60 seconds.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

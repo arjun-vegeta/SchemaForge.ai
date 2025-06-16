@@ -9,6 +9,7 @@ import DiagramView from './components/DiagramView';
 import ExportView from './components/ExportView';
 import LoadingOverlay from './components/LoadingOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
+import ServerStatusBanner from './components/ServerStatusBanner';
 import { GenerationResult, LoadingState, TabType, ApiError } from './types';
 import { apiService } from './services/api';
 import toast from 'react-hot-toast';
@@ -89,11 +90,29 @@ function App() {
       toast.dismiss('generation-progress');
       toast.success('Schema generated successfully!');
 
-    } catch (err) {
-      const apiError = err as ApiError;
+    } catch (err: any) {
+      // Convert error to ApiError format if it's not already
+      const apiError: ApiError = err.response ? {
+        error: err.response.data?.error || 'Server Error',
+        message: err.response.data?.message || 'An unexpected error occurred',
+        details: err.response.data?.details,
+      } : err.error ? err : {
+        error: 'Network Error',
+        message: err.message || 'Unable to connect to the server. Please check your connection.',
+      };
+
       setError(apiError);
       toast.dismiss('generation-progress');
-      toast.error(apiError.message || 'Failed to generate schema');
+      
+      // More specific error messages based on the error type
+      if (err.message?.includes('timeout') || err.code === 'ECONNABORTED') {
+        toast.error('Request timed out. The server may be starting up - please try again in a moment.');
+      } else if (err.response?.status >= 500) {
+        toast.error('Server error occurred. Please try again.');
+      } else {
+        toast.error(apiError.message || 'Failed to generate schema');
+      }
+      
       console.error('Generation error:', apiError);
     } finally {
       setLoadingState({ isLoading: false, stage: null, progress: 0 });
@@ -164,6 +183,9 @@ function App() {
         
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+            {/* Server Status Banner */}
+            <ServerStatusBanner />
+
             {/* Progress indicator */}
             {loadingState.isLoading && (
               <div className="mb-6">

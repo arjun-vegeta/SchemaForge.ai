@@ -3,47 +3,209 @@ import { GenerationResult, ApiError } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
 
-// Create axios instance with default config
+// Server status types
+export interface ServerStatus {
+  isAwake: boolean;
+  isWakingUp: boolean;
+  lastActiveTime: number;
+  consecutiveFailures: number;
+}
+
+// Global server status
+let serverStatus: ServerStatus = {
+  isAwake: true,
+  isWakingUp: false,
+  lastActiveTime: Date.now(),
+  consecutiveFailures: 0,
+};
+
+// Background health check
+let healthCheckInterval: NodeJS.Timeout | null = null;
+
+const startBackgroundHealthCheck = () => {
+  if (healthCheckInterval) return; // Already running
+  
+  healthCheckInterval = setInterval(async () => {
+    // Only check if server is not awake or waking up
+    if (!serverStatus.isAwake || serverStatus.isWakingUp) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/health`, { timeout: 10000 });
+        if (response.status === 200) {
+          console.log('🟢 Background health check: Server is responding');
+          serverStatus.isAwake = true;
+          serverStatus.isWakingUp = false;
+          serverStatus.consecutiveFailures = 0;
+          serverStatus.lastActiveTime = Date.now();
+          notifyStatusChange();
+        }
+      } catch (error) {
+        console.log('🔍 Background health check: Server still not responding');
+      }
+    }
+  }, 5000); // Check every 5 seconds when server is down
+};
+
+const stopBackgroundHealthCheck = () => {
+  if (healthCheckInterval) {
+    clearInterval(healthCheckInterval);
+    healthCheckInterval = null;
+  }
+};
+
+// Status change listeners
+const statusListeners: Array<(status: ServerStatus) => void> = [];
+
+export const subscribeToServerStatus = (listener: (status: ServerStatus) => void) => {
+  statusListeners.push(listener);
+  // Immediately notify with current status
+  listener({ ...serverStatus });
+  
+  // Return unsubscribe function
+  return () => {
+    const index = statusListeners.indexOf(listener);
+    if (index > -1) {
+      statusListeners.splice(index, 1);
+    }
+  };
+};
+
+const notifyStatusChange = () => {
+  statusListeners.forEach(listener => listener({ ...serverStatus }));
+};
+
+// Sleep detection parameters
+const SLEEP_TIMEOUT = 30000; // 30 seconds to detect likely sleep
+const WAKE_UP_TIMEOUT = 120000; // 2 minutes max wake-up time
+const MAX_RETRIES = 8; // Maximum retry attempts during wake-up
+const RETRY_DELAYS = [1000, 2000, 3000, 5000, 8000, 12000, 15000, 20000]; // Progressive delays
+
+// Create axios instance with enhanced config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds timeout
+  timeout: SLEEP_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response) {
-      // Server responded with error status
-      const apiError: ApiError = {
-        error: error.response.data.error || 'Server Error',
-        message: error.response.data.message || 'An unexpected error occurred',
-        details: error.response.data.details,
-      };
-      throw apiError;
-    } else if (error.request) {
-      // Network error
-      const networkError: ApiError = {
-        error: 'Network Error',
-        message: 'Unable to connect to the server. Please check your connection.',
-      };
-      throw networkError;
-    } else {
-      // Other error
-      const unknownError: ApiError = {
-        error: 'Unknown Error',
-        message: error.message || 'An unexpected error occurred',
-      };
-      throw unknownError;
+// Enhanced sleep/wake detection
+const detectServerSleep = (error: any): boolean => {
+  // Network timeout or connection error patterns that suggest server sleep
+  if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR') {
+    return true;
+  }
+  
+  // Axios timeout
+  if (error.message?.includes('timeout')) {
+    return true;
+  }
+  
+  // Connection refused or similar
+  if (error.message?.includes('connect') || error.message?.includes('ECONNREFUSED')) {
+    return true;
+  }
+  
+  // 502/503/504 errors often indicate server starting up
+  if (error.response?.status >= 502 && error.response?.status <= 504) {
+    return true;
+  }
+  
+  return false;
+};
+
+// Enhanced retry with exponential backoff
+const retryWithBackoff = async <T>(
+  operation: () => Promise<T>,
+  maxRetries: number = MAX_RETRIES,
+  retryDelays: number[] = RETRY_DELAYS,
+  operationName: string = 'API call'
+): Promise<T> => {
+  let lastError: any;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await operation();
+      
+      // Success! Update server status
+      if (serverStatus.isWakingUp || !serverStatus.isAwake) {
+        console.log('🟢 Server is now awake and responding');
+        serverStatus.isAwake = true;
+        serverStatus.isWakingUp = false;
+        serverStatus.consecutiveFailures = 0;
+        serverStatus.lastActiveTime = Date.now();
+        notifyStatusChange();
+        stopBackgroundHealthCheck(); // Stop monitoring since server is responding
+      }
+      
+      return result;
+    } catch (error: any) {
+      lastError = error;
+      const isLikelySleep = detectServerSleep(error);
+      
+      console.log(`❌ ${operationName} attempt ${attempt + 1}/${maxRetries + 1} failed:`, {
+        error: error.message,
+        isLikelySleep,
+        willRetry: attempt < maxRetries
+      });
+      
+             // Update server status on first failure
+      if (attempt === 0 && isLikelySleep) {
+        serverStatus.consecutiveFailures++;
+        
+        if (serverStatus.isAwake) {
+          console.log('😴 Server appears to be sleeping, starting wake-up process...');
+          serverStatus.isAwake = false;
+          serverStatus.isWakingUp = true;
+          notifyStatusChange();
+          startBackgroundHealthCheck(); // Start monitoring for when server comes back
+        }
+      }
+      
+      // Don't retry if it's not a sleep-related error
+      if (!isLikelySleep && attempt === 0) {
+        throw error;
+      }
+      
+      // Don't retry on last attempt
+      if (attempt === maxRetries) {
+        console.log('💀 Max retries reached, server may be down');
+        serverStatus.isWakingUp = false;
+        serverStatus.consecutiveFailures = maxRetries + 1;
+        notifyStatusChange();
+        break;
+      }
+      
+      // Wait before next retry
+      const delay = retryDelays[attempt] || retryDelays[retryDelays.length - 1];
+      console.log(`⏳ Waiting ${delay}ms before retry ${attempt + 2}/${maxRetries + 1}...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
+  }
+  
+  throw lastError;
+};
+
+// Response interceptor for enhanced error handling
+apiClient.interceptors.response.use(
+  (response) => {
+    // Success - update server status if needed
+    if (!serverStatus.isAwake || serverStatus.isWakingUp) {
+      serverStatus.isAwake = true;
+      serverStatus.isWakingUp = false;
+      serverStatus.consecutiveFailures = 0;
+      serverStatus.lastActiveTime = Date.now();
+      notifyStatusChange();
+    }
+    return response;
+  },
+  (error) => {
+    // Let the retry logic handle this
+    throw error;
   }
 );
 
 export const apiService = {
-  // Health check
+  // Enhanced health check with retry
   async healthCheck(): Promise<{ 
     status: string; 
     message: string;
@@ -52,40 +214,90 @@ export const apiService = {
       message: string;
     };
   }> {
-    const response = await apiClient.get('/health');
-    return response.data;
+    return retryWithBackoff(
+      async () => {
+        const response = await apiClient.get('/health');
+        return response.data;
+      },
+      3, // Fewer retries for health check
+      [1000, 3000, 5000],
+      'Health check'
+    );
   },
 
-  // Generate schema from natural language description
+  // Generate schema with enhanced retry logic
   async generateSchema(description: string): Promise<GenerationResult> {
-    const response = await apiClient.post('/schema/generate', {
-      description: description.trim(),
-    });
-    return response.data;
+    return retryWithBackoff(
+      async () => {
+        const response = await apiClient.post('/schema/generate', {
+          description: description.trim(),
+        });
+        return response.data;
+      },
+      MAX_RETRIES,
+      RETRY_DELAYS,
+      'Schema generation'
+    );
   },
 
-  // Validate a JSON schema
+  // Validate a JSON schema with retry
   async validateSchema(schema: any): Promise<{ valid: boolean; errors: any[] }> {
-    const response = await apiClient.post('/schema/validate', {
-      schema,
-    });
-    return response.data;
+    return retryWithBackoff(
+      async () => {
+        const response = await apiClient.post('/schema/validate', {
+          schema,
+        });
+        return response.data;
+      },
+      5, // Medium retry count for validation
+      [1000, 2000, 4000, 8000, 12000],
+      'Schema validation'
+    );
   },
 
-  // Generate API endpoints from entities
+  // Generate API endpoints with retry
   async generateApiEndpoints(entities: any): Promise<any> {
-    const response = await apiClient.post('/schema/api-endpoints', {
-      entities,
-    });
-    return response.data;
+    return retryWithBackoff(
+      async () => {
+        const response = await apiClient.post('/schema/api-endpoints', {
+          entities,
+        });
+        return response.data;
+      },
+      MAX_RETRIES,
+      RETRY_DELAYS,
+      'API endpoints generation'
+    );
   },
 
-  // Generate ERD diagram from entities
+  // Generate ERD diagram with retry
   async generateErdDiagram(entities: any): Promise<any> {
-    const response = await apiClient.post('/schema/erd', {
-      entities,
-    });
-    return response.data;
+    return retryWithBackoff(
+      async () => {
+        const response = await apiClient.post('/schema/erd', {
+          entities,
+        });
+        return response.data;
+      },
+      MAX_RETRIES,
+      RETRY_DELAYS,
+      'ERD diagram generation'
+    );
+  },
+
+  // Get current server status
+  getServerStatus(): ServerStatus {
+    return { ...serverStatus };
+  },
+
+  // Manual server wake-up ping
+  async pingServer(): Promise<boolean> {
+    try {
+      await this.healthCheck();
+      return true;
+    } catch (error) {
+      return false;
+    }
   },
 };
 
@@ -156,11 +368,11 @@ export const utils = {
   // Copy text to clipboard
   async copyToClipboard(text: string): Promise<boolean> {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } else {
-        // Fallback for older browsers
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      // Fallback for older browsers
+      try {
         const textArea = document.createElement('textarea');
         textArea.value = text;
         textArea.style.position = 'fixed';
@@ -169,13 +381,13 @@ export const utils = {
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        const success = document.execCommand('copy');
+        const result = document.execCommand('copy');
         document.body.removeChild(textArea);
-        return success;
+        return result;
+      } catch (fallbackError) {
+        console.error('Failed to copy to clipboard:', fallbackError);
+        return false;
       }
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-      return false;
     }
   },
 
@@ -228,6 +440,15 @@ export const utils = {
     
     // Remove duplicates and return
     return Array.from(new Set(entityKeywords));
+  },
+
+  // Format file size
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   },
 };
 
