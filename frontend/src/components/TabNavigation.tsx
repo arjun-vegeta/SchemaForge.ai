@@ -52,7 +52,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   ];
 
   return (
-    <nav className="bg-white rounded-lg shadow-sm border border-secondary-200 p-1">
+    <nav className="bg-white rounded-lg shadow-sm border border-secondary-200 p-2 md:p-3">
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -66,7 +66,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
               disabled={!isEnabled}
               className={`
                 flex flex-col items-center 
-                p-1 sm:p-2 rounded transition-all duration-200
+                p-2 sm:p-2 rounded-md transition-all duration-200
                 ${isActive && isEnabled
                   ? 'bg-primary-600 text-white shadow-sm'
                   : !isEnabled

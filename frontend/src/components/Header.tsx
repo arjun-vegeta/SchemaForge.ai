@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Database, Zap, Menu, X } from 'lucide-react';
+import { RotateCcw, Database, Zap, Menu, X, Network } from 'lucide-react';
 
 interface HeaderProps {
   onReset: () => void;
@@ -44,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({ onReset, hasData }) => {
               <span>JSON Schema</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-purple-500 rounded-sm" />
+              <Network className="w-4 h-4 text-purple-500" />
               <span>ERD Diagrams</span>
             </div>
           </div>

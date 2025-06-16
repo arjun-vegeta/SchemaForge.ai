@@ -181,24 +181,61 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
 
   const exportSvgToPng = async (svgString: string, filename: string): Promise<void> => {
     return new Promise((resolve, reject) => {
+      // First, get the actual SVG dimensions by parsing it
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
+      const svgElement = svgDoc.querySelector('svg');
+      
+      if (!svgElement) {
+        reject(new Error('Invalid SVG'));
+        return;
+      }
+
+      // Get SVG viewBox or width/height
+      const viewBox = svgElement.getAttribute('viewBox');
+      let svgWidth: number, svgHeight: number;
+      
+      if (viewBox) {
+        const [, , width, height] = viewBox.split(' ').map(Number);
+        svgWidth = width;
+        svgHeight = height;
+      } else {
+        svgWidth = parseFloat(svgElement.getAttribute('width') || '800');
+        svgHeight = parseFloat(svgElement.getAttribute('height') || '600');
+      }
+
+      // High-quality settings
+      const scale = 4; // 4x scale for ultra-high quality
+      const padding = 60;
+      
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
+      const ctx = canvas.getContext('2d', { alpha: false });
+      
+      // Set canvas size for high-DPI
+      canvas.width = (svgWidth + padding) * scale;
+      canvas.height = (svgHeight + padding) * scale;
 
-      img.onload = () => {
-        // Set canvas size with some padding
-        canvas.width = img.width + 40;
-        canvas.height = img.height + 40;
-
+      if (ctx) {
+        // Disable smoothing for crisp text
+        ctx.imageSmoothingEnabled = false;
+        
         // Fill white background
-        if (ctx) {
-          ctx.fillStyle = 'white';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          // Draw the SVG image with padding
-          ctx.drawImage(img, 20, 20);
+        // Create high-quality image from SVG
+        const img = new Image();
+        img.onload = () => {
+          // Draw image at high resolution
+          ctx.drawImage(
+            img,
+            padding * scale / 2,
+            padding * scale / 2,
+            svgWidth * scale,
+            svgHeight * scale
+          );
 
-          // Convert to blob and download
+          // Convert to blob with maximum quality
           canvas.toBlob((blob) => {
             if (blob) {
               const url = URL.createObjectURL(blob);
@@ -209,70 +246,187 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
               link.click();
               document.body.removeChild(link);
               URL.revokeObjectURL(url);
-              toast.success('PNG exported successfully!');
+              toast.success('Ultra high-quality PNG exported successfully!');
               resolve();
             } else {
               reject(new Error('Failed to create PNG blob'));
             }
-          }, 'image/png');
-        }
-      };
+          }, 'image/png', 1.0); // 1.0 is maximum quality (0-1 range)
+        };
 
-      img.onerror = () => reject(new Error('Failed to load SVG'));
+        img.onerror = () => reject(new Error('Failed to load SVG'));
 
-      // Convert SVG to data URL
-      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-      const svgUrl = URL.createObjectURL(svgBlob);
-      img.src = svgUrl;
+        // Convert SVG to data URL with high quality
+        const svgData = encodeURIComponent(svgString);
+        img.src = `data:image/svg+xml;charset=utf-8,${svgData}`;
+      }
     });
   };
 
   const exportSvgToPdf = async (svgString: string, filename: string): Promise<void> => {
-    // For PDF export, we'll use a simpler approach - convert to canvas first
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
     return new Promise((resolve, reject) => {
-      img.onload = () => {
-        // Set canvas size for PDF (A4 proportions)
-        const maxWidth = 800;
-        const maxHeight = 600;
-        const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+      // Parse SVG to get actual dimensions
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
+      const svgElement = svgDoc.querySelector('svg');
+      
+      if (!svgElement) {
+        reject(new Error('Invalid SVG'));
+        return;
+      }
+
+      // Get SVG dimensions
+      const viewBox = svgElement.getAttribute('viewBox');
+      let svgWidth: number, svgHeight: number;
+      
+      if (viewBox) {
+        const [, , width, height] = viewBox.split(' ').map(Number);
+        svgWidth = width;
+        svgHeight = height;
+      } else {
+        svgWidth = parseFloat(svgElement.getAttribute('width') || '800');
+        svgHeight = parseFloat(svgElement.getAttribute('height') || '600');
+      }
+
+      // Ultra high-quality settings for PDF
+      const scale = 6; // Even higher scale for PDF print quality
+      const padding = 80;
+      
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      
+      canvas.width = (svgWidth + padding) * scale;
+      canvas.height = (svgHeight + padding) * scale;
+
+      if (ctx) {
+        // Disable smoothing for crisp lines and text
+        ctx.imageSmoothingEnabled = false;
         
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
+        // White background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const img = new Image();
+        img.onload = () => {
+          // Draw at ultra-high resolution
+          ctx.drawImage(
+            img,
+            padding * scale / 2,
+            padding * scale / 2,
+            svgWidth * scale,
+            svgHeight * scale
+          );
 
-        if (ctx) {
-          ctx.fillStyle = 'white';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          // Convert canvas to data URL with maximum quality
+          const imageDataUrl = canvas.toDataURL('image/png', 1.0);
+          
+          // Create PDF using browser's built-in PDF generation
+          const pdfWindow = window.open('', '_blank');
+          if (pdfWindow) {
+            pdfWindow.document.write(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <title>ERD Diagram - ${new Date().toLocaleDateString()}</title>
+                <style>
+                  body {
+                    margin: 0;
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                    background: white;
+                  }
+                  .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #3b82f6;
+                    padding-bottom: 20px;
+                  }
+                  .header h1 {
+                    color: #1f2937;
+                    margin: 0;
+                    font-size: 24px;
+                  }
+                  .header p {
+                    color: #6b7280;
+                    margin: 5px 0 0 0;
+                  }
+                  .diagram {
+                    text-align: center;
+                    page-break-inside: avoid;
+                  }
+                  .diagram img {
+                    max-width: 100%;
+                    height: auto;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                  }
+                  .footer {
+                    margin-top: 30px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #6b7280;
+                    border-top: 1px solid #e5e7eb;
+                    padding-top: 20px;
+                  }
+                  @media print {
+                    body { margin: 0; }
+                    .no-print { display: none; }
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="header">
+                  <h1>Entity Relationship Diagram</h1>
+                  <p>Generated by SchemaForge AI on ${new Date().toLocaleDateString()}</p>
+                </div>
+                <div class="diagram">
+                  <img src="${imageDataUrl}" alt="ERD Diagram" />
+                </div>
+                <div class="footer">
+                  <p>Generated with SchemaForge AI - Transform natural language into structured data schemas</p>
+                </div>
+                <script>
+                  window.onload = function() {
+                    window.print();
+                    window.onafterprint = function() {
+                      window.close();
+                    };
+                  };
+                </script>
+              </body>
+              </html>
+            `);
+            pdfWindow.document.close();
+            
+            toast.success('PDF export initiated - use your browser\'s print dialog to save as PDF');
+            resolve();
+          } else {
+            // Fallback: download as high-quality PNG with PDF naming
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                toast.success('PDF export as high-quality image (print to PDF for full PDF functionality)');
+                resolve();
+              } else {
+                reject(new Error('Failed to create PDF'));
+              }
+            }, 'image/png', 1.0);
+          }
+        };
 
-          // Convert to blob and download as PDF-ready image
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = filename.replace('.pdf', '.png'); // Fallback to PNG
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(url);
-              toast.success('Diagram exported as PNG (PDF conversion requires additional libraries)');
-              resolve();
-            } else {
-              reject(new Error('Failed to create PDF'));
-            }
-          }, 'image/png');
-        }
-      };
+        img.onerror = () => reject(new Error('Failed to load SVG for PDF'));
 
-      img.onerror = () => reject(new Error('Failed to load SVG for PDF'));
-
-      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-      const svgUrl = URL.createObjectURL(svgBlob);
-      img.src = svgUrl;
+        // Convert SVG to data URL with high quality
+        const svgData = encodeURIComponent(svgString);
+        img.src = `data:image/svg+xml;charset=utf-8,${svgData}`;
+      }
     });
   };
 
