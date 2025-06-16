@@ -570,7 +570,7 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
+        <div className="mb-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
               Entity Relationship Diagram
@@ -578,71 +578,6 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
             <p className="text-sm sm:text-base text-secondary-600">
               Visual representation of your data structure and relationships
             </p>
-          </div>
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
-            <button
-              onClick={() => handleCopy(getCurrentContent())}
-              className="btn-outline flex items-center space-x-2 flex-1 sm:flex-none justify-center"
-            >
-              <Copy className="w-4 h-4" />
-              <span>Copy</span>
-            </button>
-            
-            {activeType === 'mermaid' && mermaidSvg ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
-                >
-                  <FileImage className="w-4 h-4" />
-                  <span className="hidden sm:inline">Export</span>
-                  <span className="sm:hidden">Export</span>
-                </button>
-                
-                {showExportMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-secondary-200 z-50">
-                    <div className="py-2">
-                      <button
-                        onClick={() => exportMermaidDiagram('svg')}
-                        className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
-                      >
-                        <FileImage className="w-4 h-4" />
-                        <span>Export as SVG</span>
-                      </button>
-                      <button
-                        onClick={() => exportMermaidDiagram('png')}
-                        className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
-                      >
-                        <FileImage className="w-4 h-4" />
-                        <span>Export as PNG</span>
-                      </button>
-                      <button
-                        onClick={() => exportMermaidDiagram('pdf')}
-                        className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
-                      >
-                        <FilePlus className="w-4 h-4" />
-                        <span>Export as PDF</span>
-                      </button>
-                      <button
-                        onClick={() => exportMermaidDiagram('html')}
-                        className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
-                      >
-                        <Globe className="w-4 h-4" />
-                        <span>Export as HTML</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                onClick={handleDownload}
-                className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download</span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -694,43 +629,102 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
           {/* Mermaid Diagram */}
           {activeType === 'mermaid' && (
             <div className="space-y-4">
-              <div className="bg-white border border-secondary-200 rounded-lg p-4 overflow-auto">
-                {!mermaidSvg || isRenderingMermaid ? (
-                  <div className="flex items-center justify-center h-48 sm:h-64">
-                    <div className="text-center">
-                      <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                      <p className="text-sm text-secondary-500">
-                        {!isMermaidInitialized ? 'Initializing diagram engine...' : 
-                         isRenderingMermaid ? 'Generating diagram...' : 
-                         !mermaidSvg ? 'Preparing diagram...' : 'Loading diagram...'}
-                      </p>
-                      {/* Debug info in development */}
-                      {process.env.NODE_ENV === 'development' && (
-                        <div className="mt-4 text-xs text-gray-400">
-                          <div>Init: {isMermaidInitialized ? '✅' : '❌'}</div>
-                          <div>Rendered: {mermaidSvg ? '✅' : '❌'}</div>
-                          <div>Rendering: {isRenderingMermaid ? '✅' : '❌'}</div>
-                          <div>Code: {erdDiagram.mermaid ? '✅' : '❌'}</div>
-                          {renderError && <div className="text-red-500">Error: {renderError}</div>}
+              <div className="bg-white border border-secondary-200 rounded-lg relative overflow-hidden">
+                {mermaidSvg && !isRenderingMermaid && !renderError && (
+                  <div className="absolute top-4 right-4 z-20">
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowExportMenu(!showExportMenu)}
+                        className="btn-primary flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                      >
+                        <FileImage className="w-4 h-4" />
+                        <span>Export</span>
+                      </button>
+                      
+                      {showExportMenu && (
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-secondary-200 z-50">
+                          <div className="py-2">
+                            <button
+                              onClick={() => exportMermaidDiagram('svg')}
+                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                            >
+                              <FileImage className="w-4 h-4" />
+                              <span>Export as SVG</span>
+                            </button>
+                            <button
+                              onClick={() => exportMermaidDiagram('png')}
+                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                            >
+                              <FileImage className="w-4 h-4" />
+                              <span>Export as PNG</span>
+                            </button>
+                            <button
+                              onClick={() => exportMermaidDiagram('pdf')}
+                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                            >
+                              <FilePlus className="w-4 h-4" />
+                              <span>Export as PDF</span>
+                            </button>
+                            <button
+                              onClick={() => exportMermaidDiagram('html')}
+                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                            >
+                              <Globe className="w-4 h-4" />
+                              <span>Export as HTML</span>
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
-                ) : renderError ? (
-                  <div className="text-center p-8 text-red-600">
-                    <p>Error rendering diagram</p>
-                    <p className="text-sm mt-2">{renderError}</p>
-                  </div>
-                ) : (
-                  <div ref={mermaidRef} className="mermaid-container" style={{ minHeight: '200px' }} />
                 )}
+                <div className="p-4 overflow-auto">
+                  {!mermaidSvg || isRenderingMermaid ? (
+                    <div className="flex items-center justify-center h-48 sm:h-64">
+                      <div className="text-center">
+                        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                        <p className="text-sm text-secondary-500">
+                          {!isMermaidInitialized ? 'Initializing diagram engine...' : 
+                           isRenderingMermaid ? 'Generating diagram...' : 
+                           !mermaidSvg ? 'Preparing diagram...' : 'Loading diagram...'}
+                        </p>
+                        {/* Debug info in development */}
+                        {process.env.NODE_ENV === 'development' && (
+                          <div className="mt-4 text-xs text-gray-400">
+                            <div>Init: {isMermaidInitialized ? '✅' : '❌'}</div>
+                            <div>Rendered: {mermaidSvg ? '✅' : '❌'}</div>
+                            <div>Rendering: {isRenderingMermaid ? '✅' : '❌'}</div>
+                            <div>Code: {erdDiagram.mermaid ? '✅' : '❌'}</div>
+                            {renderError && <div className="text-red-500">Error: {renderError}</div>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : renderError ? (
+                    <div className="text-center p-8 text-red-600">
+                      <p>Error rendering diagram</p>
+                      <p className="text-sm mt-2">{renderError}</p>
+                    </div>
+                  ) : (
+                    <div ref={mermaidRef} className="mermaid-container" style={{ minHeight: '200px' }} />
+                  )}
+                </div>
               </div>
               
               <details className="bg-secondary-50 border border-secondary-200 rounded-lg">
                 <summary className="px-4 py-3 cursor-pointer font-medium text-secondary-700">
                   View Mermaid Code
                 </summary>
-                <div className="px-4 pb-4 overflow-x-auto">
+                <div className="px-4 pb-4 overflow-x-auto relative">
+                  <div className="absolute top-4 right-4 z-10">
+                    <button
+                      onClick={() => handleCopy(erdDiagram.mermaid)}
+                      className="btn-outline flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                    >
+                      <Copy className="w-4 h-4" />
+                      <span>Copy</span>
+                    </button>
+                  </div>
                   <SyntaxHighlighter
                     language="mermaid"
                     style={oneLight}
@@ -738,6 +732,7 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                     customStyle={{
                       margin: 0,
                       borderRadius: '0.5rem',
+                      paddingTop: '3rem',
                     }}
                   >
                     {erdDiagram.mermaid}
@@ -751,11 +746,20 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
           {activeType === 'plantuml' && (
             <div className="space-y-4">
               <div className="bg-secondary-50 p-4 rounded-lg">
-                <p className="text-sm text-secondary-600 mb-2">
+                <p className="text-sm text-secondary-600">
                   Use this PlantUML code with any PlantUML renderer or IDE plugin.
                 </p>
               </div>
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto">
+                <div className="absolute top-4 right-4 z-10">
+                  <button
+                    onClick={() => handleCopy(erdDiagram.plantUML)}
+                    className="btn-outline flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Copy</span>
+                  </button>
+                </div>
                 <SyntaxHighlighter
                   language="plantuml"
                   style={oneLight}
@@ -763,6 +767,7 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                   customStyle={{
                     margin: 0,
                     borderRadius: '0.5rem',
+                    paddingTop: '3rem',
                   }}
                 >
                   {erdDiagram.plantUML}

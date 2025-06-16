@@ -110,7 +110,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
+        <div className="mb-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
               Generated API Endpoints
@@ -118,22 +118,6 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
             <p className="text-sm sm:text-base text-secondary-600">
               Complete REST API specification with interactive documentation
             </p>
-          </div>
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
-            <button
-              onClick={() => handleCopy(getCodeContent())}
-              className="btn-outline flex items-center space-x-2 flex-1 sm:flex-none justify-center"
-            >
-              <Copy className="w-4 h-4" />
-              <span>Copy</span>
-            </button>
-            <button
-              onClick={handleDownload}
-              className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download</span>
-            </button>
           </div>
         </div>
 
@@ -192,26 +176,35 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
             </div>
           )}
 
-          {/* Entity selector for code examples */}
+          {/* Entity selector and banner for code examples */}
           {['javascript', 'python', 'curl'].includes(activeView) && !isLoading && (
             <div className="mb-4">
-              <label htmlFor="entity-select" className="block text-sm font-medium text-secondary-700 mb-2">
-                Select Entity
-              </label>
-              <div className="relative w-full sm:w-auto">
-                <select
-                  id="entity-select"
-                  value={selectedEntity}
-                  onChange={(e) => setSelectedEntity(e.target.value)}
-                  className="block w-full sm:w-auto px-3 py-2 pr-8 border border-secondary-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base appearance-none"
-                >
-                  {entities.map((entity) => (
-                    <option key={entity.name} value={entity.name}>
-                      {entity.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-500 pointer-events-none" />
+              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between lg:space-x-6 space-y-4 lg:space-y-0">
+                <div className="flex-shrink-0">
+                  <label htmlFor="entity-select" className="block text-sm font-medium text-secondary-700 mb-2">
+                    Select Entity
+                  </label>
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      id="entity-select"
+                      value={selectedEntity}
+                      onChange={(e) => setSelectedEntity(e.target.value)}
+                      className="block w-full sm:w-auto px-3 py-2 pr-8 border border-secondary-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base appearance-none"
+                    >
+                      {entities.map((entity) => (
+                        <option key={entity.name} value={entity.name}>
+                          {entity.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-500 pointer-events-none" />
+                  </div>
+                </div>
+                <div className="bg-secondary-50 p-4 rounded-lg flex-1 lg:max-w-lg">
+                  <p className="text-sm text-secondary-600">
+                    Ready-to-use code examples for the <strong>{selectedEntity}</strong> entity in {activeView}.
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -286,7 +279,26 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                   Complete OpenAPI 3.0 specification that can be imported into tools like Swagger UI, Postman, or Insomnia.
                 </p>
               </div>
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto">
+                <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
+                  <button
+                    onClick={() => handleCopy(formattedOpenApiSpec)}
+                    className="btn-outline flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Copy</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const filename = `openapi-spec-${Date.now()}.json`;
+                      utils.downloadAsFile(formattedOpenApiSpec, filename, 'json');
+                    }}
+                    className="btn-primary flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download</span>
+                  </button>
+                </div>
                 <SyntaxHighlighter
                   language="json"
                   style={oneLight}
@@ -295,6 +307,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                   customStyle={{
                     margin: 0,
                     borderRadius: '0.5rem',
+                    paddingTop: '3rem',
                   }}
                 >
                   {formattedOpenApiSpec}
@@ -305,26 +318,29 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
 
           {/* Code Examples */}
           {['javascript', 'python', 'curl'].includes(activeView) && !isLoading && (
-            <div className="space-y-4">
-              <div className="bg-secondary-50 p-4 rounded-lg">
-                <p className="text-sm text-secondary-600">
-                  Ready-to-use code examples for the <strong>{selectedEntity}</strong> entity in {activeView}.
-                </p>
-              </div>
-              <div className="overflow-x-auto">
-                <SyntaxHighlighter
-                  language={activeView === 'curl' ? 'bash' : activeView}
-                  style={oneLight}
-                  className="text-xs sm:text-sm"
-                  showLineNumbers
-                  customStyle={{
-                    margin: 0,
-                    borderRadius: '0.5rem',
-                  }}
+            <div className="relative overflow-x-auto">
+              <div className="absolute top-4 right-4 z-10">
+                <button
+                  onClick={() => handleCopy(getCodeContent())}
+                  className="btn-outline flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
                 >
-                  {getCodeContent()}
-                </SyntaxHighlighter>
+                  <Copy className="w-4 h-4" />
+                  <span>Copy</span>
+                </button>
               </div>
+              <SyntaxHighlighter
+                language={activeView === 'curl' ? 'bash' : activeView}
+                style={oneLight}
+                className="text-xs sm:text-sm"
+                showLineNumbers
+                customStyle={{
+                  margin: 0,
+                  borderRadius: '0.5rem',
+                  paddingTop: '3rem',
+                }}
+              >
+                {getCodeContent()}
+              </SyntaxHighlighter>
             </div>
           )}
         </div>

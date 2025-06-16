@@ -86,7 +86,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
+        <div className="mb-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
               Generated Schema
@@ -94,22 +94,6 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
             <p className="text-sm sm:text-base text-secondary-600">
               Structured data definitions and entity relationships
             </p>
-          </div>
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
-            <button
-              onClick={() => handleCopy(getContentForCopy())}
-              className="btn-outline flex items-center space-x-2 flex-1 sm:flex-none justify-center"
-            >
-              <Copy className="w-4 h-4" />
-              <span>Copy</span>
-            </button>
-            <button
-              onClick={handleDownload}
-              className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download</span>
-            </button>
           </div>
         </div>
 
@@ -304,7 +288,26 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                   Valid JSON Schema (Draft 2020-12) that can be used for validation and documentation.
                 </p>
               </div>
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto">
+                <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
+                  <button
+                    onClick={() => handleCopy(formattedJsonSchema)}
+                    className="btn-outline flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Copy</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const filename = `json-schema-${Date.now()}.json`;
+                      utils.downloadAsFile(formattedJsonSchema, filename, 'json');
+                    }}
+                    className="btn-primary flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download</span>
+                  </button>
+                </div>
                 <SyntaxHighlighter
                   language="json"
                   style={oneLight}
@@ -313,6 +316,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                   customStyle={{
                     margin: 0,
                     borderRadius: '0.5rem',
+                    paddingTop: '3rem',
                   }}
                 >
                   {formattedJsonSchema}
@@ -329,7 +333,26 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                   Raw parsed data from the AI analysis, including entities and relationships.
                 </p>
               </div>
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto">
+                <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
+                  <button
+                    onClick={() => handleCopy(formattedParsedEntities)}
+                    className="btn-outline flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Copy</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const filename = `raw-data-${Date.now()}.json`;
+                      utils.downloadAsFile(formattedParsedEntities, filename, 'json');
+                    }}
+                    className="btn-primary flex items-center space-x-1 text-sm px-3 py-1.5 shadow-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download</span>
+                  </button>
+                </div>
                 <SyntaxHighlighter
                   language="json"
                   style={oneLight}
@@ -338,6 +361,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                   customStyle={{
                     margin: 0,
                     borderRadius: '0.5rem',
+                    paddingTop: '3rem',
                   }}
                 >
                   {formattedParsedEntities}
