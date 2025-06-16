@@ -185,19 +185,19 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-secondary-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
               Export & Download
             </h2>
-            <p className="text-secondary-600">
+            <p className="text-sm sm:text-base text-secondary-600">
               Download all generated schemas, APIs, and diagrams in various formats
             </p>
           </div>
           <button
             onClick={() => handleDownload('complete')}
-            className="btn-primary flex items-center space-x-2"
+            className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center"
           >
             <Package className="w-4 h-4" />
             <span>Download All</span>
@@ -205,7 +205,7 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
         </div>
 
         {/* Generation Summary */}
-        <div className="grid md:grid-cols-4 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
           <div>
             <span className="font-medium text-secondary-700">Entities:</span>
             <span className="ml-2 text-secondary-900">
@@ -224,7 +224,7 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
               {generationResult.data.parsedEntities.relationships.length}
             </span>
           </div>
-          <div>
+          <div className="col-span-2 sm:col-span-1">
             <span className="font-medium text-secondary-700">Generated:</span>
             <span className="ml-2 text-secondary-900">
               {new Date(generationResult.data.generatedAt).toLocaleDateString()}
@@ -234,12 +234,12 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
       </div>
 
       {/* Export Options */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-secondary-900 mb-4">
           Export Options
         </h3>
         
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <div>
             <label htmlFor="format" className="block text-sm font-medium text-secondary-700 mb-2">
               Format
@@ -287,7 +287,7 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
       </div>
 
       {/* Export Items */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {exportItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -296,11 +296,11 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
               className={`border rounded-lg p-4 ${getColorClasses(item.color)}`}
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <Icon className="w-5 h-5" />
-                  <div>
-                    <h4 className="font-medium">{item.title}</h4>
-                    <p className="text-xs opacity-75 mt-1">{item.description}</p>
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <h4 className="font-medium truncate">{item.title}</h4>
+                    <p className="text-xs opacity-75 mt-1 line-clamp-2">{item.description}</p>
                   </div>
                 </div>
               </div>
@@ -311,7 +311,7 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
                 </span>
                 <button
                   onClick={() => handleDownload(item.id)}
-                  className="flex items-center space-x-1 text-xs bg-white bg-opacity-50 hover:bg-opacity-75 px-2 py-1 rounded transition-colors"
+                  className="flex items-center space-x-1 text-xs bg-white bg-opacity-50 hover:bg-opacity-75 px-2 py-1 rounded transition-colors flex-shrink-0"
                 >
                   <Download className="w-3 h-3" />
                   <span>Download</span>
@@ -323,12 +323,12 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-secondary-900 mb-4">
           Quick Actions
         </h3>
         
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-secondary-50 p-4 rounded-lg">
             <h4 className="font-medium text-secondary-900 mb-2">Development Package</h4>
             <p className="text-sm text-secondary-600 mb-3">
@@ -375,7 +375,7 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
       </div>
 
       {/* Usage Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-blue-900 mb-3">
           Usage Instructions
         </h3>

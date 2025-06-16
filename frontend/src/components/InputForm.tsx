@@ -39,60 +39,73 @@ const InputForm: React.FC<InputFormProps> = ({
   const isValid = characterCount >= 10 && characterCount <= 5000;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
+    <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-secondary-900 mb-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-secondary-900 mb-2">
           Describe Your Data Requirements
         </h2>
-        <p className="text-secondary-600">
+        <p className="text-sm sm:text-base text-secondary-600">
           Use natural language to describe the data you want to manage. Our AI will automatically 
           generate JSON schemas, API endpoints, and ERD diagrams.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="description" className="block text-sm font-medium text-secondary-700 mb-2">
-            Data Description
-          </label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="relative">
           <textarea
-            id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g., I need to store user profiles with name, email, and age, and also product details with name, price, and description..."
-            className={`form-textarea h-32 ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
+            placeholder="Example: I need to manage a library system with books, authors, and members..."
+            className="form-textarea min-h-[150px] sm:min-h-[200px] text-sm sm:text-base"
             disabled={isLoading}
           />
-          
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center space-x-4 text-sm">
-              <span className={`${isValid ? 'text-secondary-500' : 'text-red-500'}`}>
-                {characterCount}/5000 characters
-              </span>
-              {characterCount > 0 && characterCount < 10 && (
-                <span className="text-red-500 text-xs">Too short</span>
-              )}
-            </div>
-            
+          <div className="absolute bottom-2 right-2 text-xs text-secondary-500">
+            {characterCount}/5000
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-2">
             <button
               type="button"
               onClick={() => setShowExamples(!showExamples)}
-              className="flex items-center space-x-1 text-sm text-primary-600 hover:text-primary-700"
+              className="flex items-center space-x-2 text-sm text-secondary-600 hover:text-secondary-900"
             >
-              <Lightbulb className="w-4 h-4" />
-              <span>Examples</span>
+              <HelpCircle className="w-4 h-4" />
+              <span>{showExamples ? 'Hide Examples' : 'Show Examples'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-3 w-full sm:w-auto">
+            <button
+              type="submit"
+              disabled={!isValid || isLoading}
+              className={`btn-primary flex-1 sm:flex-none flex items-center justify-center space-x-2 ${
+                (!isValid || isLoading) && 'opacity-50 cursor-not-allowed'
+              }`}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Generate Schema</span>
+                </>
+              )}
             </button>
           </div>
         </div>
 
-        {/* Examples */}
         {showExamples && (
-          <div className="mb-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
+          <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
             <h4 className="text-sm font-medium text-primary-900 mb-3 flex items-center space-x-2">
               <Lightbulb className="w-4 h-4" />
               <span>Example Descriptions</span>
             </h4>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {examples.map((example, index) => (
                 <button
                   key={index}
@@ -109,7 +122,7 @@ const InputForm: React.FC<InputFormProps> = ({
 
         {/* Error display */}
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
@@ -128,37 +141,15 @@ const InputForm: React.FC<InputFormProps> = ({
         )}
 
         {/* Tips */}
-        <div className="mb-6 p-4 bg-secondary-50 rounded-lg border border-secondary-200">
-          <h4 className="text-sm font-medium text-secondary-900 mb-2 flex items-center space-x-2">
-            <HelpCircle className="w-4 h-4" />
-            <span>Tips for Better Results</span>
-          </h4>
+        <div className="mt-4 p-4 bg-secondary-50 rounded-lg border border-secondary-200">
+          <h4 className="text-sm font-medium text-secondary-900 mb-2">Tips for Better Results</h4>
           <ul className="text-sm text-secondary-600 space-y-1">
-            <li>• Be specific about field names and types (e.g., "email address", "price in USD")</li>
-            <li>• Mention relationships between entities (e.g., "users can have multiple orders")</li>
-            <li>• Include constraints when relevant (e.g., "required fields", "unique identifiers")</li>
-            <li>• Describe the purpose or context of your data</li>
+            <li>• Be specific about entity relationships and attributes</li>
+            <li>• Mention any validation rules or constraints</li>
+            <li>• Include any special requirements for data types</li>
+            <li>• Specify if you need any specific API endpoints</li>
           </ul>
         </div>
-
-        {/* Submit button */}
-        <button
-          type="submit"
-          disabled={!isValid || isLoading}
-          className="btn-primary w-full flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>Generating...</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4" />
-              <span>Generate Schema & API</span>
-            </>
-          )}
-        </button>
       </form>
     </div>
   );

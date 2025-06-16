@@ -80,27 +80,27 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-secondary-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
               Generated API Endpoints
             </h2>
-            <p className="text-secondary-600">
+            <p className="text-sm sm:text-base text-secondary-600">
               Complete REST API specification with interactive documentation
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               onClick={() => handleCopy(getCodeContent())}
-              className="btn-outline flex items-center space-x-2"
+              className="btn-outline flex items-center space-x-2 flex-1 sm:flex-none justify-center"
             >
               <Copy className="w-4 h-4" />
               <span>Copy</span>
             </button>
             <button
               onClick={handleDownload}
-              className="btn-primary flex items-center space-x-2"
+              className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
             >
               <Download className="w-4 h-4" />
               <span>Download</span>
@@ -109,7 +109,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
         </div>
 
         {/* API Summary */}
-        <div className="grid md:grid-cols-3 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
           <div>
             <span className="font-medium text-secondary-700">Total Endpoints:</span>
             <span className="ml-2 text-secondary-900">{apiEndpoints.summary.totalEndpoints}</span>
@@ -118,7 +118,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
             <span className="font-medium text-secondary-700">Entities:</span>
             <span className="ml-2 text-secondary-900">{apiEndpoints.summary.entities.length}</span>
           </div>
-          <div>
+          <div className="sm:col-span-2 md:col-span-1">
             <span className="font-medium text-secondary-700">Generated:</span>
             <span className="ml-2 text-secondary-900">
               {new Date(apiEndpoints.summary.generatedAt).toLocaleString()}
@@ -130,28 +130,29 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
       {/* API Type Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200">
         <div className="border-b border-secondary-200">
-          <nav className="flex">
+          <nav className="flex overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveView(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  className={`flex items-center space-x-2 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeView === tab.id
                       ? 'border-primary-500 text-primary-600'
                       : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.label.replace('JavaScript', 'JS').replace('OpenAPI Spec', 'OpenAPI')}</span>
                 </button>
               );
             })}
           </nav>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Entity selector for code examples */}
           {['javascript', 'python', 'curl'].includes(activeView) && (
             <div className="mb-4">
@@ -162,7 +163,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                 id="entity-select"
                 value={selectedEntity}
                 onChange={(e) => setSelectedEntity(e.target.value)}
-                className="form-input w-auto"
+                className="form-input w-full sm:w-auto"
               >
                 {entities.map((entity) => (
                   <option key={entity.name} value={entity.name}>
@@ -176,13 +177,13 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
           {/* Overview */}
           {activeView === 'overview' && (
             <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-secondary-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-secondary-900 mb-3">Available Endpoints</h3>
                   <div className="space-y-2">
                     {Object.entries(apiEndpoints.openApiSpec.paths).map(([path, methods]) => (
                       <div key={path} className="text-sm">
-                        <code className="bg-white px-2 py-1 rounded text-xs">{path}</code>
+                        <code className="bg-white px-2 py-1 rounded text-xs break-all">{path}</code>
                         <div className="mt-1 flex flex-wrap gap-1">
                           {Object.keys(methods as any).map((method) => (
                             <span key={method} className={`text-xs px-2 py-0.5 rounded ${
@@ -243,14 +244,20 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                   Complete OpenAPI 3.0 specification that can be imported into tools like Swagger UI, Postman, or Insomnia.
                 </p>
               </div>
-              <SyntaxHighlighter
-                language="json"
-                style={oneLight}
-                className="text-sm"
-                showLineNumbers
-              >
-                {JSON.stringify(apiEndpoints.openApiSpec, null, 2)}
-              </SyntaxHighlighter>
+              <div className="overflow-x-auto">
+                <SyntaxHighlighter
+                  language="json"
+                  style={oneLight}
+                  className="text-xs sm:text-sm"
+                  showLineNumbers
+                  customStyle={{
+                    margin: 0,
+                    borderRadius: '0.5rem',
+                  }}
+                >
+                  {JSON.stringify(apiEndpoints.openApiSpec, null, 2)}
+                </SyntaxHighlighter>
+              </div>
             </div>
           )}
 
@@ -262,14 +269,20 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                   Ready-to-use code examples for the <strong>{selectedEntity}</strong> entity in {activeView}.
                 </p>
               </div>
-              <SyntaxHighlighter
-                language={activeView === 'curl' ? 'bash' : activeView}
-                style={oneLight}
-                className="text-sm"
-                showLineNumbers
-              >
-                {getCodeContent()}
-              </SyntaxHighlighter>
+              <div className="overflow-x-auto">
+                <SyntaxHighlighter
+                  language={activeView === 'curl' ? 'bash' : activeView}
+                  style={oneLight}
+                  className="text-xs sm:text-sm"
+                  showLineNumbers
+                  customStyle={{
+                    margin: 0,
+                    borderRadius: '0.5rem',
+                  }}
+                >
+                  {getCodeContent()}
+                </SyntaxHighlighter>
+              </div>
             </div>
           )}
         </div>

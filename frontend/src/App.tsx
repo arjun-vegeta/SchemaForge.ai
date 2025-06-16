@@ -162,12 +162,12 @@ function App() {
       <div className="min-h-screen bg-secondary-50">
         <Header onReset={handleReset} hasData={!!generationResult} />
         
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Progress indicator */}
             {loadingState.isLoading && (
               <div className="mb-6">
-                <div className="bg-white rounded-lg p-4 shadow-sm border">
+                <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-secondary-700">
                       {loadingState.stage && loadingState.stage.charAt(0).toUpperCase() + loadingState.stage.slice(1)}
@@ -194,7 +194,7 @@ function App() {
             />
 
             {/* Main content */}
-            <div className="mt-6">
+            <div className="mt-6 sm:mt-8">
               {renderActiveTab()}
             </div>
 
@@ -204,7 +204,7 @@ function App() {
                 <h3 className="text-lg font-semibold text-secondary-900 mb-4">
                   Generation Summary
                 </h3>
-                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div className="bg-primary-50 p-4 rounded-lg">
                     <div className="font-medium text-primary-900">Entities</div>
                     <div className="text-2xl font-bold text-primary-600">

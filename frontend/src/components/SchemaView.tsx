@@ -40,27 +40,27 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-secondary-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
               Generated Schema
             </h2>
-            <p className="text-secondary-600">
+            <p className="text-sm sm:text-base text-secondary-600">
               Structured data definitions and entity relationships
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               onClick={() => handleCopy(JSON.stringify(activeView === 'raw' ? jsonSchema : parsedEntities, null, 2))}
-              className="btn-outline flex items-center space-x-2"
+              className="btn-outline flex items-center space-x-2 flex-1 sm:flex-none justify-center"
             >
               <Copy className="w-4 h-4" />
               <span>Copy</span>
             </button>
             <button
               onClick={handleDownload}
-              className="btn-primary flex items-center space-x-2"
+              className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
             >
               <Download className="w-4 h-4" />
               <span>Download</span>
@@ -69,7 +69,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
         </div>
 
         {/* Metadata */}
-        <div className="grid md:grid-cols-3 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
           <div>
             <span className="font-medium text-secondary-700">Total Entities:</span>
             <span className="ml-2 text-secondary-900">{parsedEntities.entities.length}</span>
@@ -78,7 +78,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
             <span className="font-medium text-secondary-700">Total Relationships:</span>
             <span className="ml-2 text-secondary-900">{parsedEntities.relationships.length}</span>
           </div>
-          <div>
+          <div className="sm:col-span-2 md:col-span-1">
             <span className="font-medium text-secondary-700">Generated:</span>
             <span className="ml-2 text-secondary-900">
               {new Date(jsonSchema.metadata.generatedAt).toLocaleString()}
@@ -90,14 +90,14 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
       {/* View Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200">
         <div className="border-b border-secondary-200">
-          <nav className="flex">
+          <nav className="flex overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveView(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  className={`flex items-center space-x-2 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeView === tab.id
                       ? 'border-primary-500 text-primary-600'
                       : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
@@ -111,13 +111,13 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
           </nav>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Entities View */}
           {activeView === 'entities' && (
             <div className="space-y-6">
               {parsedEntities.entities.map((entity) => (
-                <div key={entity.name} className="border border-secondary-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
+                <div key={entity.name} className="border border-secondary-200 rounded-lg p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
                     <div>
                       <h3 className="text-lg font-semibold text-secondary-900">
                         {entity.name}
@@ -131,73 +131,97 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                     </div>
                   </div>
                   
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-secondary-200">
-                          <th className="text-left py-2 font-medium text-secondary-700">Field</th>
-                          <th className="text-left py-2 font-medium text-secondary-700">Type</th>
-                          <th className="text-left py-2 font-medium text-secondary-700">Required</th>
-                          <th className="text-left py-2 font-medium text-secondary-700">Constraints</th>
-                          <th className="text-left py-2 font-medium text-secondary-700">Description</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {entity.fields.map((field) => (
-                          <tr key={field.name} className="border-b border-secondary-100">
-                            <td className="py-2">
-                              <code className="text-xs bg-secondary-100 px-1 py-0.5 rounded">
-                                {field.name}
-                              </code>
-                            </td>
-                            <td className="py-2">
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                {field.type}
-                              </span>
-                            </td>
-                            <td className="py-2">
-                              <span className={`text-xs px-2 py-0.5 rounded ${
-                                field.required 
-                                  ? 'bg-red-100 text-red-800' 
-                                  : 'bg-green-100 text-green-800'
-                              }`}>
-                                {field.required ? 'Yes' : 'No'}
-                              </span>
-                            </td>
-                            <td className="py-2">
-                              {field.constraints && Object.keys(field.constraints).length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {Object.entries(field.constraints).map(([key, value]) => (
-                                    <span key={key} className="text-xs bg-purple-100 text-purple-800 px-1 py-0.5 rounded">
-                                      {key}: {String(value)}
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-xs text-secondary-400">None</span>
-                              )}
-                            </td>
-                            <td className="py-2 text-xs text-secondary-600">
-                              {field.description}
-                            </td>
+                  <div className="overflow-x-auto -mx-4 sm:mx-0">
+                    <div className="inline-block min-w-full align-middle">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-secondary-200">
+                            <th className="text-left py-2 px-4 font-medium text-secondary-700">Field</th>
+                            <th className="text-left py-2 px-4 font-medium text-secondary-700">Type</th>
+                            <th className="text-left py-2 px-4 font-medium text-secondary-700">Required</th>
+                            <th className="text-left py-2 px-4 font-medium text-secondary-700 hidden sm:table-cell">Constraints</th>
+                            <th className="text-left py-2 px-4 font-medium text-secondary-700 hidden md:table-cell">Description</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {entity.fields.map((field) => (
+                            <tr key={field.name} className="border-b border-secondary-100">
+                              <td className="py-2 px-4">
+                                <code className="text-xs bg-secondary-100 px-1 py-0.5 rounded">
+                                  {field.name}
+                                </code>
+                              </td>
+                              <td className="py-2 px-4">
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                  {field.type}
+                                </span>
+                              </td>
+                              <td className="py-2 px-4">
+                                <span className={`text-xs px-2 py-0.5 rounded ${
+                                  field.required 
+                                    ? 'bg-red-100 text-red-800' 
+                                    : 'bg-green-100 text-green-800'
+                                }`}>
+                                  {field.required ? 'Yes' : 'No'}
+                                </span>
+                              </td>
+                              <td className="py-2 px-4 hidden sm:table-cell">
+                                {field.constraints && Object.keys(field.constraints).length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {Object.entries(field.constraints).map(([key, value]) => (
+                                      <span key={key} className="text-xs bg-purple-100 text-purple-800 px-1 py-0.5 rounded">
+                                        {key}: {String(value)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-secondary-400">None</span>
+                                )}
+                              </td>
+                              <td className="py-2 px-4 text-xs text-secondary-600 hidden md:table-cell">
+                                {field.description}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Mobile view for constraints and description */}
+                  <div className="sm:hidden mt-4 space-y-2">
+                    {entity.fields.map((field) => (
+                      <div key={`${field.name}-mobile`} className="bg-secondary-50 p-3 rounded text-sm">
+                        <div className="font-medium text-secondary-900 mb-1">{field.name}</div>
+                        {field.constraints && Object.keys(field.constraints).length > 0 && (
+                          <div className="mb-1">
+                            <span className="text-xs text-secondary-500">Constraints: </span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {Object.entries(field.constraints).map(([key, value]) => (
+                                <span key={key} className="text-xs bg-purple-100 text-purple-800 px-1 py-0.5 rounded">
+                                  {key}: {String(value)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="text-xs text-secondary-600">{field.description}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
 
               {/* Relationships */}
               {parsedEntities.relationships.length > 0 && (
-                <div className="border border-secondary-200 rounded-lg p-4">
+                <div className="border border-secondary-200 rounded-lg p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-secondary-900 mb-4">
                     Relationships
                   </h3>
                   <div className="space-y-3">
                     {parsedEntities.relationships.map((rel, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
-                        <div className="flex items-center space-x-4">
+                      <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-secondary-50 rounded-lg space-y-2 sm:space-y-0">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                           <span className="font-medium text-secondary-900">{rel.from}</span>
                           <span className="text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded">
                             {rel.type}
@@ -223,14 +247,20 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                   Valid JSON Schema (Draft 2020-12) that can be used for validation and documentation.
                 </p>
               </div>
-              <SyntaxHighlighter
-                language="json"
-                style={oneLight}
-                className="text-sm"
-                showLineNumbers
-              >
-                {JSON.stringify(jsonSchema, null, 2)}
-              </SyntaxHighlighter>
+              <div className="overflow-x-auto">
+                <SyntaxHighlighter
+                  language="json"
+                  style={oneLight}
+                  className="text-xs sm:text-sm"
+                  showLineNumbers
+                  customStyle={{
+                    margin: 0,
+                    borderRadius: '0.5rem',
+                  }}
+                >
+                  {JSON.stringify(jsonSchema, null, 2)}
+                </SyntaxHighlighter>
+              </div>
             </div>
           )}
 
@@ -242,14 +272,20 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
                   Raw parsed data from the AI analysis, including entities and relationships.
                 </p>
               </div>
-              <SyntaxHighlighter
-                language="json"
-                style={oneLight}
-                className="text-sm"
-                showLineNumbers
-              >
-                {JSON.stringify(parsedEntities, null, 2)}
-              </SyntaxHighlighter>
+              <div className="overflow-x-auto">
+                <SyntaxHighlighter
+                  language="json"
+                  style={oneLight}
+                  className="text-xs sm:text-sm"
+                  showLineNumbers
+                  customStyle={{
+                    margin: 0,
+                    borderRadius: '0.5rem',
+                  }}
+                >
+                  {JSON.stringify(parsedEntities, null, 2)}
+                </SyntaxHighlighter>
+              </div>
             </div>
           )}
         </div>

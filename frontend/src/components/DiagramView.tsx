@@ -147,27 +147,27 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-secondary-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
               Entity Relationship Diagram
             </h2>
-            <p className="text-secondary-600">
+            <p className="text-sm sm:text-base text-secondary-600">
               Visual representation of your data structure and relationships
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               onClick={() => handleCopy(getCurrentContent())}
-              className="btn-outline flex items-center space-x-2"
+              className="btn-outline flex items-center space-x-2 flex-1 sm:flex-none justify-center"
             >
               <Copy className="w-4 h-4" />
               <span>Copy</span>
             </button>
             <button
               onClick={handleDownload}
-              className="btn-primary flex items-center space-x-2"
+              className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
             >
               <Download className="w-4 h-4" />
               <span>Download</span>
@@ -176,7 +176,7 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
         </div>
 
         {/* Metadata */}
-        <div className="grid md:grid-cols-3 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
           <div>
             <span className="font-medium text-secondary-700">Total Entities:</span>
             <span className="ml-2 text-secondary-900">{erdDiagram.metadata.totalEntities}</span>
@@ -185,7 +185,7 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
             <span className="font-medium text-secondary-700">Total Relationships:</span>
             <span className="ml-2 text-secondary-900">{erdDiagram.metadata.totalRelationships}</span>
           </div>
-          <div>
+          <div className="sm:col-span-2 md:col-span-1">
             <span className="font-medium text-secondary-700">Generated:</span>
             <span className="ml-2 text-secondary-900">
               {new Date(erdDiagram.metadata.generatedAt).toLocaleString()}
@@ -197,34 +197,35 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
       {/* Diagram Type Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200">
         <div className="border-b border-secondary-200">
-          <nav className="flex">
+          <nav className="flex overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveType(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  className={`flex items-center space-x-2 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeType === tab.id
                       ? 'border-primary-500 text-primary-600'
                       : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.label.replace('Mermaid ERD', 'Mermaid').replace('Text Description', 'Text')}</span>
                 </button>
               );
             })}
           </nav>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Mermaid Diagram */}
           {activeType === 'mermaid' && (
             <div className="space-y-4">
               <div className="bg-white border border-secondary-200 rounded-lg p-4 overflow-auto">
                 {!mermaidSvg || isRenderingMermaid ? (
-                  <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-48 sm:h-64">
                     <div className="text-center">
                       <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                       <p className="text-sm text-secondary-500">
@@ -258,11 +259,15 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                 <summary className="px-4 py-3 cursor-pointer font-medium text-secondary-700">
                   View Mermaid Code
                 </summary>
-                <div className="px-4 pb-4">
+                <div className="px-4 pb-4 overflow-x-auto">
                   <SyntaxHighlighter
                     language="mermaid"
                     style={oneLight}
-                    className="text-sm"
+                    className="text-xs sm:text-sm"
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: '0.5rem',
+                    }}
                   >
                     {erdDiagram.mermaid}
                   </SyntaxHighlighter>
@@ -279,13 +284,19 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                   Use this PlantUML code with any PlantUML renderer or IDE plugin.
                 </p>
               </div>
-              <SyntaxHighlighter
-                language="plantuml"
-                style={oneLight}
-                className="text-sm"
-              >
-                {erdDiagram.plantUML}
-              </SyntaxHighlighter>
+              <div className="overflow-x-auto">
+                <SyntaxHighlighter
+                  language="plantuml"
+                  style={oneLight}
+                  className="text-xs sm:text-sm"
+                  customStyle={{
+                    margin: 0,
+                    borderRadius: '0.5rem',
+                  }}
+                >
+                  {erdDiagram.plantUML}
+                </SyntaxHighlighter>
+              </div>
             </div>
           )}
 
@@ -297,20 +308,22 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                   Human-readable description of your database schema and relationships.
                 </p>
               </div>
-              <pre className="bg-white border border-secondary-200 rounded-lg p-4 text-sm text-secondary-900 whitespace-pre-wrap font-mono overflow-auto">
-                {erdDiagram.textual}
-              </pre>
+              <div className="overflow-x-auto">
+                <pre className="bg-white border border-secondary-200 rounded-lg p-4 text-xs sm:text-sm text-secondary-900 whitespace-pre-wrap font-mono">
+                  {erdDiagram.textual}
+                </pre>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* Entity Summary */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-secondary-900 mb-4">
           Entity Summary
         </h3>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {entities.map((entity) => (
             <div key={entity.name} className="bg-secondary-50 rounded-lg p-4">
               <h4 className="font-medium text-secondary-900 mb-2">
