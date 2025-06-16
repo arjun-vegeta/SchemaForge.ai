@@ -1,7 +1,29 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-require('dotenv').config();
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Try to load .env from all possible locations
+const envPaths = [
+  path.resolve(__dirname, '../../../.env'),  // Project root
+  path.resolve(__dirname, '../../.env'),     // Backend directory
+  path.resolve(__dirname, '../.env')         // Backend/src directory
+];
+
+envPaths.forEach(envPath => {
+  dotenv.config({ path: envPath });
+  console.log(`📝 Checking for .env at: ${envPath}`);
+});
+
+// Debug logging for environment variables
+console.log('\n🔍 Environment Variables Status:');
+console.log('--------------------------------');
+console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+console.log(`PORT: ${process.env.PORT || 'not set'}`);
+console.log(`CORS_ORIGIN: ${process.env.CORS_ORIGIN || 'not set'}`);
+console.log(`GEMINI_API_KEY: ${process.env.GEMINI_API_KEY ? '✅ set' : '❌ not set'}`);
+console.log('--------------------------------\n');
 
 const schemaRoutes = require('./routes/schema');
 const healthRoutes = require('./routes/health');
