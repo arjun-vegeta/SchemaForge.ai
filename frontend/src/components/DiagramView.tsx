@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Copy, Download, Eye, Code, FileText } from 'lucide-react';
+import { Copy, Download, Eye, Code, FileText, FileImage, FilePlus, Globe } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ErdDiagram, Entity } from '../types';
@@ -20,6 +20,7 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
   const [mermaidSvg, setMermaidSvg] = useState<string>('');
   const [isRenderingMermaid, setIsRenderingMermaid] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const mermaidRef = useRef<HTMLDivElement>(null);
 
   // Initialize Mermaid
@@ -97,6 +98,18 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
     }
   }, [mermaidSvg, activeType]);
 
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showExportMenu && !(event.target as Element).closest('.relative')) {
+        setShowExportMenu(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showExportMenu]);
+
   const handleCopy = async (content: string) => {
     const success = await utils.copyToClipboard(content);
     if (success) {
@@ -110,6 +123,261 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
     const content = getCurrentContent();
     const filename = `erd-diagram-${Date.now()}.${getFileExtension()}`;
     utils.downloadAsFile(content, filename, 'text');
+  };
+
+  // Export Mermaid diagram in different formats
+  const exportMermaidDiagram = async (format: 'svg' | 'png' | 'pdf' | 'html') => {
+    if (!mermaidSvg || activeType !== 'mermaid') {
+      toast.error('Mermaid diagram not ready for export');
+      return;
+    }
+
+    const timestamp = Date.now();
+    const baseFilename = `erd-diagram-${timestamp}`;
+
+    try {
+      switch (format) {
+        case 'svg':
+          // Export SVG directly
+          const blob = new Blob([mermaidSvg], { type: 'image/svg+xml' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${baseFilename}.svg`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          toast.success('SVG exported successfully!');
+          break;
+
+        case 'png':
+          // Convert SVG to PNG using canvas
+          await exportSvgToPng(mermaidSvg, `${baseFilename}.png`);
+          break;
+
+        case 'pdf':
+          // Convert SVG to PDF
+          await exportSvgToPdf(mermaidSvg, `${baseFilename}.pdf`);
+          break;
+
+        case 'html':
+          // Export as standalone HTML
+          const htmlContent = createStandaloneHtml(mermaidSvg, erdDiagram.mermaid);
+          utils.downloadAsFile(htmlContent, `${baseFilename}.html`, 'text');
+          toast.success('HTML exported successfully!');
+          break;
+
+        default:
+          toast.error('Unsupported export format');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error(`Failed to export as ${format.toUpperCase()}`);
+    }
+    
+    setShowExportMenu(false);
+  };
+
+  const exportSvgToPng = async (svgString: string, filename: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      img.onload = () => {
+        // Set canvas size with some padding
+        canvas.width = img.width + 40;
+        canvas.height = img.height + 40;
+
+        // Fill white background
+        if (ctx) {
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // Draw the SVG image with padding
+          ctx.drawImage(img, 20, 20);
+
+          // Convert to blob and download
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = filename;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+              toast.success('PNG exported successfully!');
+              resolve();
+            } else {
+              reject(new Error('Failed to create PNG blob'));
+            }
+          }, 'image/png');
+        }
+      };
+
+      img.onerror = () => reject(new Error('Failed to load SVG'));
+
+      // Convert SVG to data URL
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      img.src = svgUrl;
+    });
+  };
+
+  const exportSvgToPdf = async (svgString: string, filename: string): Promise<void> => {
+    // For PDF export, we'll use a simpler approach - convert to canvas first
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    return new Promise((resolve, reject) => {
+      img.onload = () => {
+        // Set canvas size for PDF (A4 proportions)
+        const maxWidth = 800;
+        const maxHeight = 600;
+        const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+        
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+
+        if (ctx) {
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // Convert to blob and download as PDF-ready image
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = filename.replace('.pdf', '.png'); // Fallback to PNG
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+              toast.success('Diagram exported as PNG (PDF conversion requires additional libraries)');
+              resolve();
+            } else {
+              reject(new Error('Failed to create PDF'));
+            }
+          }, 'image/png');
+        }
+      };
+
+      img.onerror = () => reject(new Error('Failed to load SVG for PDF'));
+
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      img.src = svgUrl;
+    });
+  };
+
+  const createStandaloneHtml = (svgString: string, mermaidCode: string): string => {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERD Diagram - Generated by SchemaForge AI</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+        }
+        .diagram-container {
+            padding: 40px;
+            text-align: center;
+            background: white;
+        }
+        .diagram-container svg {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            background: #f8fafc;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .code-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        .code-section h3 {
+            margin: 0 0 15px 0;
+            color: #374151;
+        }
+        .code-block {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 16px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Entity Relationship Diagram</h1>
+            <p>Generated by SchemaForge AI on ${new Date().toLocaleDateString()}</p>
+        </div>
+        
+        <div class="diagram-container">
+            ${svgString}
+            
+            <div class="code-section">
+                <h3>Mermaid Source Code</h3>
+                <div class="code-block">${mermaidCode.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Generated with SchemaForge AI - Transform natural language into structured data schemas</p>
+        </div>
+    </div>
+</body>
+</html>`;
   };
 
   const getCurrentContent = () => {
@@ -165,13 +433,62 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
               <Copy className="w-4 h-4" />
               <span>Copy</span>
             </button>
-            <button
-              onClick={handleDownload}
-              className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download</span>
-            </button>
+            
+            {activeType === 'mermaid' && mermaidSvg ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
+                >
+                  <FileImage className="w-4 h-4" />
+                  <span className="hidden sm:inline">Export</span>
+                  <span className="sm:hidden">Export</span>
+                </button>
+                
+                {showExportMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-secondary-200 z-50">
+                    <div className="py-2">
+                      <button
+                        onClick={() => exportMermaidDiagram('svg')}
+                        className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                      >
+                        <FileImage className="w-4 h-4" />
+                        <span>Export as SVG</span>
+                      </button>
+                      <button
+                        onClick={() => exportMermaidDiagram('png')}
+                        className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                      >
+                        <FileImage className="w-4 h-4" />
+                        <span>Export as PNG</span>
+                      </button>
+                      <button
+                        onClick={() => exportMermaidDiagram('pdf')}
+                        className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                      >
+                        <FilePlus className="w-4 h-4" />
+                        <span>Export as PDF</span>
+                      </button>
+                      <button
+                        onClick={() => exportMermaidDiagram('html')}
+                        className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                      >
+                        <Globe className="w-4 h-4" />
+                        <span>Export as HTML</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={handleDownload}
+                className="btn-primary flex items-center space-x-2 flex-1 sm:flex-none justify-center"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download</span>
+              </button>
+            )}
           </div>
         </div>
 
