@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: schema-api-generator-backend
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: https://schema-api-generator-frontend.onrender.com
+
+  - type: web
+    name: schema-api-generator-frontend
+    env: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://schema-api-generator-backend.onrender.com 

@@ -1,0 +1,30 @@
+{
+  "name": "schema-api-generator-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Schema Generator",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0",
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
+    "@google/generative-ai": "^0.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0"
+  },
+  "keywords": ["api", "schema", "generator"],
+  "author": "Your Name",
+  "license": "MIT"
+} 
