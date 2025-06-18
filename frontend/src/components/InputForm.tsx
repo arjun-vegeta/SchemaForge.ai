@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Sparkles, AlertCircle, HelpCircle, Lightbulb, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { Sparkles, AlertCircle, HelpCircle, Lightbulb, ChevronDown, ChevronUp, Zap, Target, BarChart3, Brain, FileJson, Network, GitBranch, Download } from 'lucide-react';
 import { ApiError } from '../types';
 import { utils } from '../services/api';
 
@@ -221,27 +221,47 @@ const InputForm: React.FC<InputFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
         {[
           {
-            icon: '⚡',
-            title: 'Instant Generation',
-            description: 'Transform natural language into structured schemas in seconds'
+            icon: Brain,
+            title: 'Natural Language Processing',
+            description: 'Describe your data requirements in plain English'
           },
           {
-            icon: '🎯',
-            title: 'Precise Results',
-            description: 'AI-powered parsing creates accurate data models and relationships'
+            icon: FileJson,
+            title: 'JSON Schema Generation',
+            description: 'Automatically generates valid JSON schemas'
           },
           {
-            icon: '📊',
-            title: 'Complete Package',
-            description: 'Get JSON schemas, API endpoints, and ERD diagrams all at once'
+            icon: Network,
+            title: 'REST API Generation',
+            description: 'Creates complete OpenAPI specifications'
+          },
+          {
+            icon: GitBranch,
+            title: 'ERP Diagram Generation',
+            description: 'Visual entity relationship diagrams using Mermaid'
+          },
+          {
+            icon: Download,
+            title: 'Export Options',
+            description: 'Download schemas, API specs, and diagram code'
+          },
+          {
+            icon: Sparkles,
+            title: 'AI-Powered',
+            description: 'Uses Google Gemini API for intelligent parsing'
           }
-        ].map((feature, index) => (
-          <div key={index} className="text-center space-y-3 p-6 rounded-xl bg-white/50 dark:bg-secondary-900/50 border border-secondary-200 dark:border-secondary-700">
-            <div className="text-3xl">{feature.icon}</div>
-            <h3 className="font-semibold text-secondary-900 dark:text-white">{feature.title}</h3>
-            <p className="text-sm text-secondary-600 dark:text-secondary-400">{feature.description}</p>
-          </div>
-        ))}
+        ].map((feature, index) => {
+          const Icon = feature.icon;
+          return (
+            <div key={index} className="text-center space-y-3 p-6 rounded-xl bg-white/50 dark:bg-secondary-900/50 border border-secondary-200 dark:border-secondary-700">
+              <div className="flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl mx-auto">
+                <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              </div>
+              <h3 className="font-semibold text-secondary-900 dark:text-white">{feature.title}</h3>
+              <p className="text-sm text-secondary-600 dark:text-secondary-400">{feature.description}</p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

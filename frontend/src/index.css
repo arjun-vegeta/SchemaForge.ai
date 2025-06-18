@@ -151,32 +151,47 @@
 }
 
 /* Custom animations */
-@keyframes slideUpAndFade {
+@keyframes blurOut {
   0% {
-    transform: translateY(0) scale(1);
+    filter: blur(0px);
     opacity: 1;
   }
   100% {
-    transform: translateY(-40px) scale(0.95);
+    filter: blur(8px);
     opacity: 0;
   }
 }
 
-@keyframes slideDownAndAppear {
+@keyframes blurIn {
   0% {
-    transform: translateY(-20px) scale(0.98);
+    filter: blur(8px);
     opacity: 0;
   }
   100% {
-    transform: translateY(0) scale(1);
+    filter: blur(0px);
     opacity: 1;
   }
 }
 
-.animate-slide-up-fade {
-  animation: slideUpAndFade 0.5s ease-in-out forwards;
+@keyframes fadeInSlow {
+  0% {
+    opacity: 0;
+    transform: translateY(100px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.animate-slide-down-appear {
-  animation: slideDownAndAppear 0.5s ease-out forwards;
+.animate-blur-out {
+  animation: blurOut 0.3s ease-in-out forwards;
+}
+
+.animate-blur-in {
+  animation: blurIn 0.3s ease-in-out forwards;
+}
+
+.animate-fade-in-slow {
+  animation: fadeInSlow 0.8s ease-out forwards;
 }

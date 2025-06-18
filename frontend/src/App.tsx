@@ -25,7 +25,6 @@ function AppContent() {
     progress: 0,
   });
   const [error, setError] = useState<ApiError | null>(null);
-  const [isTabsVisible, setIsTabsVisible] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Check API status on component mount
@@ -90,7 +89,6 @@ function AppContent() {
       // Success
       setGenerationResult(result);
       setActiveTab('schema');
-      setIsTabsVisible(true);
       toast.dismiss('generation-progress');
       toast.success('Schema generated successfully!');
 
@@ -129,10 +127,9 @@ function AppContent() {
       return;
     }
     
-    // If switching to input tab and we have data, trigger slide-up animation
+    // If switching to input tab and we have data, trigger blur transition
     if (tab === 'input' && generationResult) {
       setIsTransitioning(true);
-      setIsTabsVisible(false);
       // Add small delay to let animation complete before changing tab and clearing data
       setTimeout(() => {
         setActiveTab(tab);
@@ -140,7 +137,7 @@ function AppContent() {
         setError(null);
         setIsTransitioning(false);
         toast.success('Ready for new project');
-      }, 500); // Match the animation duration
+      }, 300); // Match the animation duration
     } else {
       setActiveTab(tab);
     }
@@ -149,7 +146,6 @@ function AppContent() {
   const handleReset = useCallback(() => {
     if (generationResult) {
       setIsTransitioning(true);
-      setIsTabsVisible(false);
       // Add small delay to let animation complete before clearing data
       setTimeout(() => {
         setGenerationResult(null);
@@ -157,7 +153,7 @@ function AppContent() {
         setActiveTab('input');
         setIsTransitioning(false);
         toast.success('Reset complete');
-      }, 500); // Match the animation duration
+      }, 300); // Match the animation duration
     }
   }, [generationResult]);
 
@@ -216,11 +212,7 @@ function AppContent() {
 
           {/* Tab Navigation - Only show if data exists */}
           {generationResult && (
-            <div className={`mb-8 ${
-              isTabsVisible 
-                ? 'animate-slide-down-appear' 
-                : 'animate-slide-up-fade'
-            }`}>
+            <div className="mb-8">
               <TabNavigation
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
@@ -232,10 +224,10 @@ function AppContent() {
           {/* Main Content */}
           <div className={`${
             isTransitioning 
-              ? 'animate-slide-down-appear delay-200' 
+              ? 'animate-blur-out' 
               : activeTab === 'input' && !generationResult
-              ? 'animate-slide-down-appear'
-              : 'animate-fade-in'
+              ? 'animate-fade-in-slow'
+              : 'animate-blur-in'
           }`}>
             {renderActiveTab()}
           </div>
