@@ -100,7 +100,7 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
         </div>
 
         {/* Metadata */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-secondary-50 dark:bg-secondary-800/50 rounded-xl">
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 p-4 bg-secondary-50 dark:bg-secondary-800/50 rounded-xl">
           <div className="text-center">
             <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {parsedEntities.entities.length}
@@ -117,14 +117,14 @@ const SchemaView: React.FC<SchemaViewProps> = ({ jsonSchema, parsedEntities }) =
               Relationships
             </div>
           </div>
-          <div className="text-center">
+          {/* <div className="text-center">
             <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {new Date(jsonSchema.metadata.generatedAt).toLocaleDateString()}
             </div>
             <div className="text-sm text-secondary-600 dark:text-secondary-400">
               Generated
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

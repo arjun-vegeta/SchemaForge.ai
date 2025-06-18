@@ -19,18 +19,18 @@ const Header: React.FC<HeaderProps> = ({ onReset, hasData }) => {
   return (
     <header className="bg-white/80 dark:bg-secondary-900/80 backdrop-blur-modern border-b border-secondary-200 dark:border-secondary-700 sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between sm:h-18 h-20">
           {/* Logo and Title */}
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 w-12 h-12 bg-gradient-accent rounded-xl shadow-sm">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 w-12 h-12 bg-orange-500  rounded-xl shadow-sm">
                 <Database className=" sm:w-5 sm:h-5 w-6 h-6 text-white" />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-400 rounded-full animate-pulse" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-secondary-900 dark:text-white">
-                SchemaForge<span className="text-gradient">.ai</span>
+                SchemaForge<span className="text-orange-500 ">.ai</span>
               </h1>
               <p className="text-xs text-secondary-500 dark:text-secondary-400 -mt-0.5">
                 <span className="block sm:inline">AI-powered schema generator.</span>

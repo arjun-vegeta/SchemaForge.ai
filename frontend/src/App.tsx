@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import Header from './components/Header';
 import InputForm from './components/InputForm';
 import TabNavigation from './components/TabNavigation';
@@ -26,6 +26,7 @@ function AppContent() {
   });
   const [error, setError] = useState<ApiError | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { isDarkMode } = useTheme();
 
   // Check API status on component mount
   React.useEffect(() => {
@@ -200,7 +201,27 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-minimal transition-all duration-300">
+    <div
+      key={isDarkMode ? 'dark' : 'light'}
+      className="min-h-screen bg-gradient-minimal transition-all duration-300"
+      style={
+        !isDarkMode
+          ? {
+              backgroundImage: "url('/Header-background.png')",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center center",
+              backgroundSize: "cover",
+              backgroundAttachment: "fixed",
+            }
+          : {
+              backgroundImage: "url('/Header-background-dark.png')",
+              backgroundRepeat: "no-repeat", 
+              backgroundPosition: "center center",
+              backgroundSize: "cover",
+              backgroundAttachment: "fixed",
+            }
+      }
+    >
       <Header onReset={handleReset} hasData={!!generationResult} />
       
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

@@ -20,29 +20,37 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  useEffect(() => {
-    // Check if user has a saved preference
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Initialize with saved preference or default to dark mode
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
+      const isDark = savedTheme === 'dark';
+      // Apply theme immediately to prevent flash
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      return isDark;
     } else {
-      // Default to dark mode
-      setIsDarkMode(true);
+      // Default to dark mode and apply immediately
+      document.documentElement.classList.add('dark');
+      return true;
     }
-  }, []);
+  });
 
   useEffect(() => {
-    // Apply theme to document
+    // This effect now only saves to localStorage since we apply the class immediately above
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    // Apply theme to document when isDarkMode changes (for toggle functionality)
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    
-    // Save preference to localStorage
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
   const toggleDarkMode = () => {

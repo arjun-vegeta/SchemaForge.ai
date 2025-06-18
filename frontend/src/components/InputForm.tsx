@@ -40,15 +40,15 @@ const InputForm: React.FC<InputFormProps> = ({
   const isValid = characterCount >= 10 && characterCount <= 5000;
 
   return (
-    <div className="mt-16 max-w-4xl mx-auto space-y-8">
+    <div className="mt-10 sm:mt-16 max-w-5xl mx-auto space-y-8">
       {/* Hero Section */}
       <div className="text-center space-y-6">
         <div className="space-y-4">
           <h1 className="text-3xl sm:text-4xl font-bold text-secondary-900 dark:text-white">
             Transform Ideas into
-            <span className="text-gradient text-4xl sm:text-5xl block mt-2">
+            <span className="text-orange-600 dark:text-orange-500 text-4xl sm:text-5xl block mt-2">
               Database Schemas
-              <Zap className="w-8 h-8 text-orange-500 inline-block ml-2 align-middle translate-y-[-3px] stroke-[3]" />
+              <Zap className="w-10 h-10 text-orange-600 dark:text-orange-500 inline-block ml-2 align-middle translate-y-[-6px] stroke-[3]" />
             </span>
           </h1>
           <p className="text-base text-secondary-600 dark:text-secondary-300 max-w-2xl mx-auto leading-relaxed">
@@ -59,7 +59,7 @@ const InputForm: React.FC<InputFormProps> = ({
       </div>
 
       {/* Main Form */}
-      <div className="card-modern card-hover">
+      <div className="card-modern bg-white/85 dark:bg-secondary-900/90 backdrop-blur-md card-hover">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="relative">
             <label htmlFor="description" className="block text-sm font-semibold text-secondary-700 dark:text-secondary-300 mb-3">
@@ -71,7 +71,7 @@ const InputForm: React.FC<InputFormProps> = ({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Example: I need an e-commerce platform with products, customers, orders, and inventory management..."
-                className="textarea-modern min-h-[160px] sm:min-h-[200px] text-base"
+                className="textarea-modern min-h-[160px] sm:min-h-[200px] bg-white/50 text-base"
                 disabled={isLoading}
               />
               <div className={`absolute bottom-3 right-3 text-xs px-2 py-1 rounded-full transition-colors ${
@@ -218,7 +218,7 @@ const InputForm: React.FC<InputFormProps> = ({
       </div>
 
       {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-7 mt-12 py-20">
         {[
           {
             icon: Brain,
@@ -263,7 +263,7 @@ const InputForm: React.FC<InputFormProps> = ({
           );
         })}
       </div>
-    </div>
+ </div>
   );
 };
 
