@@ -16,9 +16,9 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   const tabs = [
     {
       id: 'input' as TabType,
-      label: 'Input',
+    label: 'New Project',
       icon: PenTool,
-      description: 'Describe your data requirements',
+      description: 'Create new database schema',
       enabled: true,
     },
     {
@@ -52,8 +52,8 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   ];
 
   return (
-    <nav className="bg-white rounded-lg shadow-sm border border-secondary-200 p-2 md:p-3">
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-2">
+    <nav className="card-modern p-2">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -65,37 +65,44 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
               onClick={() => isEnabled && onTabChange(tab.id)}
               disabled={!isEnabled}
               className={`
-                flex flex-col items-center 
-                p-2 sm:p-2 rounded-md transition-all duration-200
+                flex flex-col items-center p-3 sm:p-4 rounded-xl transition-all duration-200 group
                 ${isActive && isEnabled
-                  ? 'bg-primary-600 text-white shadow-sm'
+                  ? 'tab-active shadow-sm'
                   : !isEnabled
-                  ? 'text-secondary-400 cursor-not-allowed opacity-70'
-                  : 'text-secondary-700 hover:text-secondary-900 hover:bg-secondary-50'
+                  ? 'text-secondary-400 dark:text-secondary-600 cursor-not-allowed opacity-50'
+                  : 'tab-inactive hover:bg-secondary-50 dark:hover:bg-secondary-800'
                 }
               `}
             >
               <Icon
                 className={`
-                  w-4 h-4 sm:w-5 sm:h-5 mb-1
+                  w-5 h-5 mb-2 transition-all duration-200
                   ${isActive && isEnabled
-                    ? 'text-white'
+                    ? 'text-primary-600 dark:text-primary-400 scale-110'
                     : !isEnabled
-                    ? 'text-secondary-300'
-                    : 'text-secondary-500'
+                    ? 'text-secondary-300 dark:text-secondary-600'
+                    : 'text-secondary-500 dark:text-secondary-400 group-hover:text-secondary-700 dark:group-hover:text-secondary-200'
                   }
                 `}
               />
-              <span className="text-xs sm:text-sm font-medium truncate w-full text-center">
+              <span className={`
+                text-sm font-medium truncate w-full text-center transition-all duration-200
+                ${isActive && isEnabled
+                  ? 'text-primary-600 dark:text-primary-400'
+                  : !isEnabled
+                  ? 'text-secondary-400 dark:text-secondary-600'
+                  : 'text-secondary-600 dark:text-secondary-400 group-hover:text-secondary-800 dark:group-hover:text-secondary-200'
+                }
+              `}>
                 {tab.label}
               </span>
               <span className={`
-                hidden sm:block text-xs text-center mt-1
+                hidden sm:block text-xs text-center mt-1 transition-all duration-200
                 ${isActive && isEnabled
-                  ? 'text-primary-100'
+                  ? 'text-primary-500 dark:text-primary-400'
                   : !isEnabled
-                  ? 'text-secondary-300'
-                  : 'text-secondary-500'
+                  ? 'text-secondary-300 dark:text-secondary-600'
+                  : 'text-secondary-400 dark:text-secondary-500 group-hover:text-secondary-600 dark:group-hover:text-secondary-300'
                 }
               `}>
                 {tab.description}

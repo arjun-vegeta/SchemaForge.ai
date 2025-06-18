@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Copy, Download, Globe, Code, Book, Terminal, ChevronDown } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ApiEndpoint, Entity } from '../types';
 import { utils } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
 
 interface ApiViewProps {
@@ -17,6 +18,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
   const [activeView, setActiveView] = useState<ViewType>('overview');
   const [selectedEntity, setSelectedEntity] = useState<string>(entities[0]?.name || '');
   const [isLoading, setIsLoading] = useState(false);
+  const { isDarkMode } = useTheme();
 
   // Memoize the heavy JSON stringification
   const formattedOpenApiSpec = useMemo(() => {
@@ -109,40 +111,50 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <div className="mb-4">
+      <div className="card-modern">
+        <div className="mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
+            <h2 className="text-2xl font-bold text-secondary-900 dark:text-white">
               Generated API Endpoints
             </h2>
-            <p className="text-sm sm:text-base text-secondary-600">
+            <p className="text-secondary-600 dark:text-secondary-300 mt-1">
               Complete REST API specification with interactive documentation
             </p>
           </div>
         </div>
 
         {/* API Summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
-          <div>
-            <span className="font-medium text-secondary-700">Total Endpoints:</span>
-            <span className="ml-2 text-secondary-900">{apiEndpoints.summary.totalEndpoints}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-secondary-50 dark:bg-secondary-800/50 rounded-xl">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              {apiEndpoints.summary.totalEndpoints}
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Endpoints
+            </div>
           </div>
-          <div>
-            <span className="font-medium text-secondary-700">Entities:</span>
-            <span className="ml-2 text-secondary-900">{apiEndpoints.summary.entities.length}</span>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              {apiEndpoints.summary.entities.length}
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Entities
+            </div>
           </div>
-          <div className="sm:col-span-2 md:col-span-1">
-            <span className="font-medium text-secondary-700">Generated:</span>
-            <span className="ml-2 text-secondary-900">
-              {new Date(apiEndpoints.summary.generatedAt).toLocaleString()}
-            </span>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              {new Date(apiEndpoints.summary.generatedAt).toLocaleDateString()}
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Generated
+            </div>
           </div>
         </div>
       </div>
 
       {/* API Type Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200">
-        <div className="border-b border-secondary-200">
+      <div className="card-modern p-0 overflow-hidden">
+        <div className="border-b border-secondary-200 dark:border-secondary-700">
           <nav className="flex overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -150,10 +162,10 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                 <button
                   key={tab.id}
                   onClick={() => handleTabSwitch(tab.id)}
-                  className={`flex items-center space-x-2 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
                     activeView === tab.id
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                      ? 'tab-active border-primary-600 dark:border-primary-400'
+                      : 'tab-inactive border-transparent'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -165,13 +177,13 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
           </nav>
         </div>
 
-        <div className="p-4 sm:p-6">
+        <div className="p-6">
           {/* Loading state */}
           {isLoading && activeView === 'openapi' && (
             <div className="flex items-center justify-center py-12">
               <div className="flex items-center space-x-3">
-                <div className="w-6 h-6 spinner" />
-                <span className="text-secondary-600">Loading OpenAPI specification...</span>
+                <div className="w-6 h-6 spinner-modern" />
+                <span className="text-secondary-600 dark:text-secondary-400">Loading OpenAPI specification...</span>
               </div>
             </div>
           )}
@@ -181,7 +193,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
             <div className="mb-4">
               <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between lg:space-x-6 space-y-4 lg:space-y-0">
                 <div className="flex-shrink-0">
-                  <label htmlFor="entity-select" className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label htmlFor="entity-select" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
                     Select Entity
                   </label>
                   <div className="relative w-full sm:w-auto">
@@ -189,7 +201,7 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                       id="entity-select"
                       value={selectedEntity}
                       onChange={(e) => setSelectedEntity(e.target.value)}
-                      className="block w-full sm:w-auto px-3 py-2 pr-8 border border-secondary-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base appearance-none"
+                      className="input-modern w-full sm:w-auto pr-8 appearance-none"
                     >
                       {entities.map((entity) => (
                         <option key={entity.name} value={entity.name}>
@@ -197,11 +209,11 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-500 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-500 dark:text-secondary-400 pointer-events-none" />
                   </div>
                 </div>
-                <div className="bg-secondary-50 p-4 rounded-lg flex-1 lg:max-w-lg">
-                  <p className="text-sm text-secondary-600">
+                <div className="bg-secondary-50 dark:bg-secondary-800/50 p-4 rounded-xl flex-1 lg:max-w-lg">
+                  <p className="text-sm text-secondary-600 dark:text-secondary-400">
                     Ready-to-use code examples for the <strong>{selectedEntity}</strong> entity in {activeView}.
                   </p>
                 </div>
@@ -213,17 +225,17 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
           {activeView === 'overview' && !isLoading && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-secondary-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-secondary-900 mb-3">Available Endpoints</h3>
+                <div className="bg-secondary-50 dark:bg-secondary-800/50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-secondary-900 dark:text-white mb-3">Available Endpoints</h3>
                   <div className="space-y-2">
                     {Object.entries(apiEndpoints.openApiSpec.paths).map(([path, methods]) => (
                       <div key={path} className="text-sm">
-                        <code className="bg-white px-2 py-1 rounded text-xs break-all">{path}</code>
+                        <code className="bg-white dark:bg-secondary-700 px-2 py-1 rounded text-xs break-all">{path}</code>
                         <div className="mt-1 flex flex-wrap gap-1">
                           {Object.keys(methods as any).map((method) => (
                             <span key={method} className={`text-xs px-2 py-0.5 rounded ${
                               method === 'get' ? 'bg-green-100 text-green-800' :
-                              method === 'post' ? 'bg-blue-100 text-blue-800' :
+                              method === 'post' ? 'bg-primary-100 text-primary-800' :
                               method === 'put' ? 'bg-yellow-100 text-yellow-800' :
                               method === 'delete' ? 'bg-red-100 text-red-800' :
                               'bg-secondary-100 text-secondary-800'
@@ -237,13 +249,13 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                   </div>
                 </div>
 
-                <div className="bg-secondary-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-secondary-900 mb-3">Entity Operations</h3>
+                <div className="bg-secondary-50 dark:bg-secondary-800/50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-secondary-900 dark:text-white mb-3">Entity Operations</h3>
                   <div className="space-y-3">
                     {entities.map((entity) => (
-                      <div key={entity.name} className="bg-white p-3 rounded border">
-                        <h4 className="font-medium text-secondary-900">{entity.name}</h4>
-                        <p className="text-xs text-secondary-600 mb-2">{entity.description}</p>
+                      <div key={entity.name} className="bg-white dark:bg-secondary-700 p-3 rounded border border-secondary-200 dark:border-secondary-600">
+                        <h4 className="font-medium text-secondary-900 dark:text-white">{entity.name}</h4>
+                        <p className="text-xs text-secondary-600 dark:text-secondary-400 mb-2">{entity.description}</p>
                         <div className="flex flex-wrap gap-1">
                           {['GET', 'POST', 'PUT', 'DELETE'].map((method) => (
                             <span key={method} className="text-xs bg-secondary-100 text-secondary-700 px-2 py-0.5 rounded">
@@ -257,9 +269,9 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2">API Features</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                <h3 className="font-semibold text-primary-900 mb-2">API Features</h3>
+                <ul className="text-sm text-primary-800 space-y-1">
                   <li>• Complete CRUD operations for all entities</li>
                   <li>• Pagination support with configurable limits</li>
                   <li>• Sorting and filtering capabilities</li>
@@ -274,8 +286,8 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
           {/* OpenAPI Specification */}
           {activeView === 'openapi' && !isLoading && (
             <div className="space-y-4">
-              <div className="bg-secondary-50 p-4 rounded-lg">
-                <p className="text-sm text-secondary-600">
+              <div className="bg-secondary-50 dark:bg-secondary-800/50 p-4 rounded-lg">
+                <p className="text-sm text-secondary-600 dark:text-secondary-400">
                   Complete OpenAPI 3.0 specification that can be imported into tools like Swagger UI, Postman, or Insomnia.
                 </p>
               </div>
@@ -301,13 +313,14 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
                 </div>
                 <SyntaxHighlighter
                   language="json"
-                  style={oneLight}
+                  style={isDarkMode ? oneDark : oneLight}
                   className="text-xs sm:text-sm"
                   showLineNumbers
                   customStyle={{
                     margin: 0,
-                    borderRadius: '0.5rem',
+                    borderRadius: '0.75rem',
                     paddingTop: '3rem',
+                    background: isDarkMode ? '#1f2937' : '#f9fafb',
                   }}
                 >
                   {formattedOpenApiSpec}
@@ -330,13 +343,14 @@ const ApiView: React.FC<ApiViewProps> = ({ apiEndpoints, entities }) => {
               </div>
               <SyntaxHighlighter
                 language={activeView === 'curl' ? 'bash' : activeView}
-                style={oneLight}
+                style={isDarkMode ? oneDark : oneLight}
                 className="text-xs sm:text-sm"
                 showLineNumbers
                 customStyle={{
                   margin: 0,
-                  borderRadius: '0.5rem',
+                  borderRadius: '0.75rem',
                   paddingTop: '3rem',
+                  background: isDarkMode ? '#1f2937' : '#f9fafb',
                 }}
               >
                 {getCodeContent()}

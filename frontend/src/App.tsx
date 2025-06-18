@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import InputForm from './components/InputForm';
 import TabNavigation from './components/TabNavigation';
@@ -15,7 +16,7 @@ import { apiService } from './services/api';
 import toast from 'react-hot-toast';
 import './index.css';
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<TabType>('input');
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>({
@@ -24,6 +25,8 @@ function App() {
     progress: 0,
   });
   const [error, setError] = useState<ApiError | null>(null);
+  const [isTabsVisible, setIsTabsVisible] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Check API status on component mount
   React.useEffect(() => {
@@ -87,6 +90,7 @@ function App() {
       // Success
       setGenerationResult(result);
       setActiveTab('schema');
+      setIsTabsVisible(true);
       toast.dismiss('generation-progress');
       toast.success('Schema generated successfully!');
 
@@ -124,15 +128,38 @@ function App() {
       toast.error('Please generate a schema first');
       return;
     }
-    setActiveTab(tab);
+    
+    // If switching to input tab and we have data, trigger slide-up animation
+    if (tab === 'input' && generationResult) {
+      setIsTransitioning(true);
+      setIsTabsVisible(false);
+      // Add small delay to let animation complete before changing tab and clearing data
+      setTimeout(() => {
+        setActiveTab(tab);
+        setGenerationResult(null);
+        setError(null);
+        setIsTransitioning(false);
+        toast.success('Ready for new project');
+      }, 500); // Match the animation duration
+    } else {
+      setActiveTab(tab);
+    }
   }, [generationResult]);
 
   const handleReset = useCallback(() => {
-    setGenerationResult(null);
-    setError(null);
-    setActiveTab('input');
-    toast.success('Reset complete');
-  }, []);
+    if (generationResult) {
+      setIsTransitioning(true);
+      setIsTabsVisible(false);
+      // Add small delay to let animation complete before clearing data
+      setTimeout(() => {
+        setGenerationResult(null);
+        setError(null);
+        setActiveTab('input');
+        setIsTransitioning(false);
+        toast.success('Reset complete');
+      }, 500); // Match the animation duration
+    }
+  }, [generationResult]);
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -177,118 +204,86 @@ function App() {
   };
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-secondary-50">
-        <Header onReset={handleReset} hasData={!!generationResult} />
-        
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-            {/* Server Status Banner */}
-            <ServerStatusBanner />
+    <div className="min-h-screen bg-gradient-minimal transition-all duration-300">
+      <Header onReset={handleReset} hasData={!!generationResult} />
+      
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Server Status Banner */}
+          <ServerStatusBanner />
 
-            {/* Progress indicator */}
-            {loadingState.isLoading && (
-              <div className="mb-6">
-                <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-secondary-700">
-                      {loadingState.stage && loadingState.stage.charAt(0).toUpperCase() + loadingState.stage.slice(1)}
-                    </span>
-                    <span className="text-sm text-secondary-500">
-                      {loadingState.progress}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary-200 rounded-full h-2">
-                    <div
-                      className="bg-primary-600 h-2 rounded-full transition-all duration-500 ease-out"
-                      style={{ width: `${loadingState.progress}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {/* Tab navigation */}
-            <TabNavigation
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              hasData={!!generationResult}
-            />
 
-            {/* Main content */}
-            <div className="mt-6 sm:mt-8">
-              {renderActiveTab()}
+          {/* Tab Navigation - Only show if data exists */}
+          {generationResult && (
+            <div className={`mb-8 ${
+              isTabsVisible 
+                ? 'animate-slide-down-appear' 
+                : 'animate-slide-up-fade'
+            }`}>
+              <TabNavigation
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                hasData={!!generationResult}
+              />
             </div>
+          )}
 
-            {/* Generation summary */}
-            {generationResult && (
-              <div className="mt-8 bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-secondary-900 mb-4">
-                  Generation Summary
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                  <div className="bg-primary-50 p-4 rounded-lg">
-                    <div className="font-medium text-primary-900">Entities</div>
-                    <div className="text-2xl font-bold text-primary-600">
-                      {generationResult.data.parsedEntities.entities.length}
-                    </div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="font-medium text-green-900">API Endpoints</div>
-                    <div className="text-2xl font-bold text-green-600">
-                      {generationResult.data.apiEndpoints.summary.totalEndpoints}
-                    </div>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="font-medium text-purple-900">Relationships</div>
-                    <div className="text-2xl font-bold text-purple-600">
-                      {generationResult.data.parsedEntities.relationships.length}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 text-xs text-secondary-500">
-                  Generated on {new Date(generationResult.data.generatedAt).toLocaleString()}
-                </div>
-              </div>
-            )}
+          {/* Main Content */}
+          <div className={`${
+            isTransitioning 
+              ? 'animate-slide-down-appear delay-200' 
+              : activeTab === 'input' && !generationResult
+              ? 'animate-slide-down-appear'
+              : 'animate-fade-in'
+          }`}>
+            {renderActiveTab()}
           </div>
-        </main>
+        </div>
+      </main>
 
-        {/* Loading overlay */}
-        {loadingState.isLoading && (
-          <LoadingOverlay
-            stage={loadingState.stage}
-            progress={loadingState.progress}
-          />
-        )}
+      {/* Loading Overlay */}
+      <LoadingOverlay 
+        isVisible={loadingState.isLoading} 
+        stage={loadingState.stage}
+        progress={loadingState.progress}
+      />
 
-        {/* Toast notifications */}
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#fff',
-              color: '#374151',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: 'var(--toast-bg)',
+            color: 'var(--toast-color)',
+            border: '1px solid var(--toast-border)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#ea580c',
+              secondary: '#fff',
             },
-            success: {
-              iconTheme: {
-                primary: '#10b981',
-                secondary: '#fff',
-              },
+          },
+          error: {
+            iconTheme: {
+              primary: '#dc2626',
+              secondary: '#fff',
             },
-            error: {
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
-              },
-            },
-          }}
-        />
-      </div>
-    </ErrorBoundary>
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }
 

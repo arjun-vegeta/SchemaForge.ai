@@ -7,75 +7,63 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error: Error | null;
+  error?: Error;
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+  public state: State = {
+    hasError: false,
+  };
 
-  static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
   }
 
-  handleReset = () => {
-    this.setState({ hasError: false, error: null });
+  private handleReload = () => {
+    window.location.reload();
   };
 
-  render() {
+  public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-secondary-50 flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-8 h-8 text-red-600" />
+        <div className="min-h-screen bg-gradient-minimal flex items-center justify-center p-4">
+          <div className="card-modern max-w-md w-full text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
               </div>
             </div>
             
-            <h1 className="text-2xl font-bold text-secondary-900 mb-2">
+            <h2 className="text-2xl font-bold text-secondary-900 dark:text-white mb-3">
               Something went wrong
-            </h1>
+            </h2>
             
-            <p className="text-secondary-600 mb-6">
-              We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+            <p className="text-secondary-600 dark:text-secondary-400 mb-6">
+              We're sorry, but something unexpected happened. Please try refreshing the page.
             </p>
-            
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 text-left">
-                <details className="bg-red-50 border border-red-200 rounded p-3">
-                  <summary className="text-sm font-medium text-red-800 cursor-pointer">
-                    Error Details
-                  </summary>
-                  <pre className="mt-2 text-xs text-red-700 whitespace-pre-wrap">
-                    {this.state.error.stack}
-                  </pre>
-                </details>
+
+            {this.state.error && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-left">
+                <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">
+                  Error Details:
+                </h3>
+                <pre className="text-xs text-red-700 dark:text-red-300 font-mono overflow-x-auto">
+                  {this.state.error.message}
+                </pre>
               </div>
             )}
             
-            <div className="space-y-3">
-              <button
-                onClick={this.handleReset}
-                className="btn-primary w-full flex items-center justify-center space-x-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>Try Again</span>
-              </button>
-              
-              <button
-                onClick={() => window.location.reload()}
-                className="btn-outline w-full"
-              >
-                Refresh Page
-              </button>
-            </div>
+            <button
+              onClick={this.handleReload}
+              className="btn-primary w-full"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh Page
+            </button>
           </div>
         </div>
       );

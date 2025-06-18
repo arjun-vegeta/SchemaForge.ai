@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Copy, Download, Eye, Code, FileText, FileImage, FilePlus, Globe } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ErdDiagram, Entity } from '../types';
 import { utils } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
 import mermaid from 'mermaid';
 
@@ -22,6 +23,7 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
   const [renderError, setRenderError] = useState<string | null>(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const mermaidRef = useRef<HTMLDivElement>(null);
+  const { isDarkMode } = useTheme();
 
   // Initialize Mermaid
   useEffect(() => {
@@ -569,40 +571,50 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <div className="mb-4">
+      <div className="card-modern">
+        <div className="mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
+            <h2 className="text-2xl font-bold text-secondary-900 dark:text-white">
               Entity Relationship Diagram
             </h2>
-            <p className="text-sm sm:text-base text-secondary-600">
+            <p className="text-secondary-600 dark:text-secondary-300 mt-1">
               Visual representation of your data structure and relationships
             </p>
           </div>
         </div>
 
         {/* Metadata */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
-          <div>
-            <span className="font-medium text-secondary-700">Total Entities:</span>
-            <span className="ml-2 text-secondary-900">{erdDiagram.metadata.totalEntities}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-secondary-50 dark:bg-secondary-800/50 rounded-xl">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              {erdDiagram.metadata.totalEntities}
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Entities
+            </div>
           </div>
-          <div>
-            <span className="font-medium text-secondary-700">Total Relationships:</span>
-            <span className="ml-2 text-secondary-900">{erdDiagram.metadata.totalRelationships}</span>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              {erdDiagram.metadata.totalRelationships}
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Relationships
+            </div>
           </div>
-          <div className="sm:col-span-2 md:col-span-1">
-            <span className="font-medium text-secondary-700">Generated:</span>
-            <span className="ml-2 text-secondary-900">
-              {new Date(erdDiagram.metadata.generatedAt).toLocaleString()}
-            </span>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              {new Date(erdDiagram.metadata.generatedAt).toLocaleDateString()}
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Generated
+            </div>
           </div>
         </div>
       </div>
 
       {/* Diagram Type Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200">
-        <div className="border-b border-secondary-200">
+      <div className="card-modern p-0 overflow-hidden">
+        <div className="border-b border-secondary-200 dark:border-secondary-700">
           <nav className="flex overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -610,10 +622,10 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveType(tab.id)}
-                  className={`flex items-center space-x-2 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
                     activeType === tab.id
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                      ? 'tab-active border-primary-600 dark:border-primary-400'
+                      : 'tab-inactive border-transparent'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -629,7 +641,7 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
           {/* Mermaid Diagram */}
           {activeType === 'mermaid' && (
             <div className="space-y-4">
-              <div className="bg-white border border-secondary-200 rounded-lg relative overflow-hidden">
+                              <div className="bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-700 rounded-lg relative overflow-hidden">
                 {mermaidSvg && !isRenderingMermaid && !renderError && (
                   <div className="absolute top-4 right-4 z-20">
                     <div className="relative">
@@ -642,32 +654,32 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                       </button>
                       
                       {showExportMenu && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-secondary-200 z-50">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-secondary-800 rounded-lg shadow-lg border border-secondary-200 dark:border-secondary-700 z-50">
                           <div className="py-2">
                             <button
                               onClick={() => exportMermaidDiagram('svg')}
-                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700 flex items-center space-x-2"
                             >
                               <FileImage className="w-4 h-4" />
                               <span>Export as SVG</span>
                             </button>
                             <button
                               onClick={() => exportMermaidDiagram('png')}
-                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700 flex items-center space-x-2"
                             >
                               <FileImage className="w-4 h-4" />
                               <span>Export as PNG</span>
                             </button>
                             <button
                               onClick={() => exportMermaidDiagram('pdf')}
-                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700 flex items-center space-x-2"
                             >
                               <FilePlus className="w-4 h-4" />
                               <span>Export as PDF</span>
                             </button>
                             <button
                               onClick={() => exportMermaidDiagram('html')}
-                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center space-x-2"
+                              className="w-full text-left px-4 py-2 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700 flex items-center space-x-2"
                             >
                               <Globe className="w-4 h-4" />
                               <span>Export as HTML</span>
@@ -711,8 +723,8 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                 </div>
               </div>
               
-              <details className="bg-secondary-50 border border-secondary-200 rounded-lg">
-                <summary className="px-4 py-3 cursor-pointer font-medium text-secondary-700">
+              <details className="bg-secondary-50 dark:bg-secondary-800/50 border border-secondary-200 dark:border-secondary-700 rounded-lg">
+                <summary className="px-4 py-3 cursor-pointer font-medium text-secondary-700 dark:text-secondary-300">
                   View Mermaid Code
                 </summary>
                 <div className="px-4 pb-4 overflow-x-auto relative">
@@ -727,12 +739,13 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                   </div>
                   <SyntaxHighlighter
                     language="mermaid"
-                    style={oneLight}
+                    style={isDarkMode ? oneDark : oneLight}
                     className="text-xs sm:text-sm"
                     customStyle={{
                       margin: 0,
                       borderRadius: '0.5rem',
                       paddingTop: '3rem',
+                      background: isDarkMode ? '#1f2937' : '#f9fafb',
                     }}
                   >
                     {erdDiagram.mermaid}
@@ -745,8 +758,8 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
           {/* PlantUML Code */}
           {activeType === 'plantuml' && (
             <div className="space-y-4">
-              <div className="bg-secondary-50 p-4 rounded-lg">
-                <p className="text-sm text-secondary-600">
+              <div className="bg-secondary-50 dark:bg-secondary-800/50 p-4 rounded-lg">
+                <p className="text-sm text-secondary-600 dark:text-secondary-400">
                   Use this PlantUML code with any PlantUML renderer or IDE plugin.
                 </p>
               </div>
@@ -762,12 +775,13 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
                 </div>
                 <SyntaxHighlighter
                   language="plantuml"
-                  style={oneLight}
+                  style={isDarkMode ? oneDark : oneLight}
                   className="text-xs sm:text-sm"
                   customStyle={{
                     margin: 0,
                     borderRadius: '0.5rem',
                     paddingTop: '3rem',
+                    background: isDarkMode ? '#1f2937' : '#f9fafb',
                   }}
                 >
                   {erdDiagram.plantUML}
@@ -779,13 +793,13 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
           {/* Textual Description */}
           {activeType === 'textual' && (
             <div className="space-y-4">
-              <div className="bg-secondary-50 p-4 rounded-lg">
-                <p className="text-sm text-secondary-600">
+              <div className="bg-secondary-50 dark:bg-secondary-800/50 p-4 rounded-lg">
+                <p className="text-sm text-secondary-600 dark:text-secondary-400">
                   Human-readable description of your database schema and relationships.
                 </p>
               </div>
               <div className="overflow-x-auto">
-                <pre className="bg-white border border-secondary-200 rounded-lg p-4 text-xs sm:text-sm text-secondary-900 whitespace-pre-wrap font-mono">
+                <pre className="bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-700 rounded-lg p-4 text-xs sm:text-sm text-secondary-900 dark:text-white whitespace-pre-wrap font-mono">
                   {erdDiagram.textual}
                 </pre>
               </div>
@@ -795,20 +809,20 @@ const DiagramView: React.FC<DiagramViewProps> = ({ erdDiagram, entities }) => {
       </div>
 
       {/* Entity Summary */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <h3 className="text-lg font-semibold text-secondary-900 mb-4">
+      <div className="card-modern">
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
           Entity Summary
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {entities.map((entity) => (
-            <div key={entity.name} className="bg-secondary-50 rounded-lg p-4">
-              <h4 className="font-medium text-secondary-900 mb-2">
+            <div key={entity.name} className="bg-secondary-50 dark:bg-secondary-800/50 rounded-lg p-4">
+              <h4 className="font-medium text-secondary-900 dark:text-white mb-2">
                 {entity.name}
               </h4>
-              <p className="text-sm text-secondary-600 mb-3">
+              <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-3">
                 {entity.description}
               </p>
-              <div className="text-xs text-secondary-500">
+              <div className="text-xs text-secondary-500 dark:text-secondary-400">
                 <div>Table: {entity.tableName}</div>
                 <div>Fields: {entity.fields.length}</div>
               </div>

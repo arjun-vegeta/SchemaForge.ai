@@ -171,7 +171,7 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
 
   const getColorClasses = (color: string) => {
     const colorMap = {
-      blue: 'bg-blue-50 text-blue-700 border-blue-200',
+      blue: 'bg-primary-50 text-primary-700 border-primary-200',
       green: 'bg-green-50 text-green-700 border-green-200',
       purple: 'bg-purple-50 text-purple-700 border-purple-200',
       orange: 'bg-orange-50 text-orange-700 border-orange-200',
@@ -185,109 +185,150 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
+      <div className="card-modern">
+        <div className="mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-secondary-900">
+            <h2 className="text-2xl font-bold text-secondary-900 dark:text-white">
               Export & Download
             </h2>
-            <p className="text-sm sm:text-base text-secondary-600">
+            <p className="text-secondary-600 dark:text-secondary-300 mt-1">
               Download all generated schemas, APIs, and diagrams in various formats
             </p>
           </div>
-          <button
-            onClick={() => handleDownload('complete')}
-            className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center"
-          >
-            <Package className="w-4 h-4" />
-            <span>Download All</span>
-          </button>
         </div>
 
         {/* Generation Summary */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm bg-secondary-50 p-4 rounded-lg">
-          <div>
-            <span className="font-medium text-secondary-700">Entities:</span>
-            <span className="ml-2 text-secondary-900">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-secondary-50 dark:bg-secondary-800/50 rounded-xl">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {generationResult.data.parsedEntities.entities.length}
-            </span>
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Entities
+            </div>
           </div>
-          <div>
-            <span className="font-medium text-secondary-700">API Endpoints:</span>
-            <span className="ml-2 text-secondary-900">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {generationResult.data.apiEndpoints.summary.totalEndpoints}
-            </span>
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              API Endpoints
+            </div>
           </div>
-          <div>
-            <span className="font-medium text-secondary-700">Relationships:</span>
-            <span className="ml-2 text-secondary-900">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {generationResult.data.parsedEntities.relationships.length}
-            </span>
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Relationships
+            </div>
           </div>
-          <div className="col-span-2 sm:col-span-1">
-            <span className="font-medium text-secondary-700">Generated:</span>
-            <span className="ml-2 text-secondary-900">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {new Date(generationResult.data.generatedAt).toLocaleDateString()}
-            </span>
+            </div>
+            <div className="text-sm text-secondary-600 dark:text-secondary-400">
+              Generated
+            </div>
           </div>
         </div>
       </div>
 
       {/* Export Options */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <h3 className="text-lg font-semibold text-secondary-900 mb-4">
+      <div className="card-modern">
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
           Export Options
         </h3>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-          <div>
-            <label htmlFor="format" className="block text-sm font-medium text-secondary-700 mb-2">
-              Format
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-1">
+            <label htmlFor="format" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-3">
+              Export Format
             </label>
-            <select
-              id="format"
-              value={exportOptions.format}
-              onChange={(e) => setExportOptions({ ...exportOptions, format: e.target.value as any })}
-              className="form-input w-full"
-            >
-              <option value="json">JSON</option>
-              <option value="yaml">YAML</option>
-              <option value="typescript">TypeScript</option>
-              <option value="sql">SQL</option>
-              <option value="mongoose">Mongoose</option>
-            </select>
+            <div className="relative">
+              <select
+                id="format"
+                value={exportOptions.format}
+                onChange={(e) => setExportOptions({ ...exportOptions, format: e.target.value as any })}
+                className="input-modern w-full appearance-none pr-10"
+              >
+                <option value="json">JSON</option>
+                <option value="yaml">YAML</option>
+                <option value="typescript">TypeScript</option>
+                <option value="sql">SQL</option>
+                <option value="mongoose">Mongoose</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="w-4 h-4 text-secondary-500 dark:text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-2">
+              Choose the output format for exported files
+            </p>
           </div>
           
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="includeComments"
-              checked={exportOptions.includeComments}
-              onChange={(e) => setExportOptions({ ...exportOptions, includeComments: e.target.checked })}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
-            />
-            <label htmlFor="includeComments" className="ml-2 text-sm text-secondary-700">
-              Include Comments
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-3">
+              Output Options
             </label>
-          </div>
-          
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="minified"
-              checked={exportOptions.minified}
-              onChange={(e) => setExportOptions({ ...exportOptions, minified: e.target.checked })}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
-            />
-            <label htmlFor="minified" className="ml-2 text-sm text-secondary-700">
-              Minified Output
-            </label>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3 p-3 bg-secondary-50 dark:bg-secondary-800/50 rounded-lg">
+                <div className="flex items-center h-5">
+                  <input
+                    type="checkbox"
+                    id="includeComments"
+                    checked={exportOptions.includeComments}
+                    onChange={(e) => setExportOptions({ ...exportOptions, includeComments: e.target.checked })}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 dark:border-secondary-600 dark:bg-secondary-700 rounded"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="includeComments" className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer">
+                    Include Comments
+                  </label>
+                  <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
+                    Add descriptive comments to generated code and schemas
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-3 p-3 bg-secondary-50 dark:bg-secondary-800/50 rounded-lg">
+                <div className="flex items-center h-5">
+                  <input
+                    type="checkbox"
+                    id="minified"
+                    checked={exportOptions.minified}
+                    onChange={(e) => setExportOptions({ ...exportOptions, minified: e.target.checked })}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 dark:border-secondary-600 dark:bg-secondary-700 rounded"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="minified" className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer">
+                    Minified Output
+                  </label>
+                  <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
+                    Remove whitespace and formatting for smaller file sizes
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Export Items */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 relative">
+        <div className="absolute -top-16 right-10 z-10">
+          <button
+            onClick={() => handleDownload('complete')}
+            className="btn-primary flex items-center space-x-2 text-sm px-3 py-1.5 shadow-sm"
+          >
+            <Package className="w-4 h-4" />
+            <span>Download All</span>
+          </button>
+        </div>
         {exportItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -323,17 +364,17 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4 sm:p-6">
-        <h3 className="text-lg font-semibold text-secondary-900 mb-4">
+      <div className="card-modern">
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
           Quick Actions
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-secondary-50 p-4 rounded-lg">
-            <h4 className="font-medium text-secondary-900 mb-2">Development Package</h4>
-            <p className="text-sm text-secondary-600 mb-3">
-              Schema + API + Code examples for development
-            </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-secondary-50 dark:bg-secondary-800/50 p-4 rounded-lg">
+            <h4 className="font-medium text-secondary-900 dark:text-white mb-2">Development Package</h4>
+                          <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-3">
+                Schema + API + Code examples for development
+              </p>
             <button
               onClick={() => {
                 const devPackage = {
@@ -350,11 +391,11 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
             </button>
           </div>
           
-          <div className="bg-secondary-50 p-4 rounded-lg">
-            <h4 className="font-medium text-secondary-900 mb-2">Documentation Package</h4>
-            <p className="text-sm text-secondary-600 mb-3">
-              ERD + Text descriptions for documentation
-            </p>
+                      <div className="bg-secondary-50 dark:bg-secondary-800/50 p-4 rounded-lg">
+              <h4 className="font-medium text-secondary-900 dark:text-white mb-2">Documentation Package</h4>
+                          <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-3">
+                ERD + Text descriptions for documentation
+              </p>
             <button
               onClick={() => {
                 const docPackage = {
@@ -375,11 +416,11 @@ const ExportView: React.FC<ExportViewProps> = ({ generationResult }) => {
       </div>
 
       {/* Usage Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">
+      <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 sm:p-6">
+        <h3 className="text-lg font-semibold text-primary-900 dark:text-primary-100 mb-3">
           Usage Instructions
         </h3>
-        <div className="text-sm text-blue-800 space-y-2">
+        <div className="text-sm text-primary-800 dark:text-primary-200 space-y-2">
           <p><strong>JSON Schema:</strong> Use for data validation in your application</p>
           <p><strong>OpenAPI Spec:</strong> Import into Swagger UI, Postman, or Insomnia</p>
           <p><strong>Mermaid ERD:</strong> Render in GitHub, GitLab, or Mermaid Live Editor</p>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { RotateCcw, Database, Zap, Menu, X, Network } from 'lucide-react';
+import { RotateCcw, Database, Moon, Sun, Menu, X } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface HeaderProps {
   onReset: () => void;
@@ -8,73 +9,87 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onReset, hasData }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isDarkMode, toggleDarkMode } = useTheme();
 
   const handleReset = () => {
     onReset();
-    setIsMobileMenuOpen(false); // Close mobile menu after reset
+    setIsMobileMenuOpen(false);
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-secondary-200">
+    <header className="bg-white/80 dark:bg-secondary-900/80 backdrop-blur-modern border-b border-secondary-200 dark:border-secondary-700 sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Title */}
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-primary-600 rounded-lg">
-              <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            <div className="relative">
+              <div className="flex items-center justify-center w-10 h-10 bg-gradient-accent rounded-xl shadow-sm">
+                <Database className="w-5 h-5 text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-400 rounded-full animate-pulse" />
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-secondary-900">
-                SchemaForge AI
+              <h1 className="text-xl font-bold text-secondary-900 dark:text-white">
+                SchemaForge<span className="text-gradient">.ai</span>
               </h1>
-              <p className="text-xs mt-[-5px] sm:text-sm text-secondary-500">
-                AI-powered API & ERD generator
+              <p className="text-xs text-secondary-500 dark:text-secondary-400 -mt-0.5">
+                AI-powered schema generator
               </p>
             </div>
           </div>
 
-          {/* Features highlight - Desktop */}
-          <div className="hidden lg:flex items-center space-x-6 text-sm text-secondary-600">
-            <div className="flex items-center space-x-2">
-              <Zap className="w-4 h-4 text-primary-500" />
-              <span>Natural Language</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Database className="w-4 h-4 text-green-500" />
-              <span>JSON Schema</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Network className="w-4 h-4 text-purple-500" />
-              <span>ERD Diagrams</span>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center space-x-3">
             {hasData && (
               <button
                 onClick={onReset}
-                className="hidden sm:flex items-center space-x-2 px-3 py-2 text-sm text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors"
+                className="btn-ghost text-sm"
               >
-                <RotateCcw className="w-4 h-4" />
-                <span className="hidden md:inline">Reset</span>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset
               </button>
             )}
             
-            <div className="text-xs sm:text-sm text-secondary-500 hidden sm:block">
+            <button
+              onClick={toggleDarkMode}
+              className="btn-ghost"
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+
+            <div className="text-xs text-secondary-400 dark:text-secondary-500 ml-2">
               v1.0.0
             </div>
+          </div>
 
-            {/* Mobile menu button */}
+          {/* Mobile menu button */}
+          <div className="flex items-center space-x-2 md:hidden">
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 text-secondary-600 dark:text-secondary-400 hover:text-secondary-900 dark:hover:text-white hover:bg-secondary-100 dark:hover:bg-secondary-800 rounded-lg transition-all duration-200"
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+            
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors"
+              className="p-2 text-secondary-600 dark:text-secondary-400 hover:text-secondary-900 dark:hover:text-white hover:bg-secondary-100 dark:hover:bg-secondary-800 rounded-lg transition-all duration-200"
               aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {isMobileMenuOpen ? (
-                <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                <X className="w-5 h-5" />
               ) : (
-                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Menu className="w-5 h-5" />
               )}
             </button>
           </div>
@@ -82,30 +97,18 @@ const Header: React.FC<HeaderProps> = ({ onReset, hasData }) => {
 
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-secondary-200 animate-slideIn">
-            <div className="px-4 py-3 space-y-3">
-              <div className="flex items-center space-x-2 text-sm text-secondary-600">
-                <Zap className="w-4 h-4 text-primary-500" />
-                <span>Natural Language Processing</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-secondary-600">
-                <Database className="w-4 h-4 text-green-500" />
-                <span>JSON Schema Generation</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-secondary-600">
-                <div className="w-4 h-4 bg-purple-500 rounded-sm" />
-                <span>ERD Diagram Creation</span>
-              </div>
+          <div className="md:hidden border-t border-secondary-200 dark:border-secondary-700 animate-slide-up">
+            <div className="px-4 py-4 space-y-3">
               {hasData && (
                 <button
                   onClick={handleReset}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors w-full text-left"
+                  className="flex items-center space-x-3 w-full text-left px-3 py-2 text-sm text-secondary-700 dark:text-secondary-300 hover:text-secondary-900 dark:hover:text-white hover:bg-secondary-100 dark:hover:bg-secondary-800 rounded-lg transition-all duration-200"
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>Reset All Data</span>
                 </button>
               )}
-              <div className="text-xs text-secondary-500 pt-2 border-t border-secondary-200">
+              <div className="text-xs text-secondary-400 dark:text-secondary-500 px-3 py-2 border-t border-secondary-200 dark:border-secondary-700">
                 Version 1.0.0
               </div>
             </div>

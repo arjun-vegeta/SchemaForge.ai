@@ -1,136 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { Loader2, Brain, FileText, Globe, Network, Wifi, AlertTriangle } from 'lucide-react';
-import { subscribeToServerStatus, ServerStatus } from '../services/api';
+import React from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface LoadingOverlayProps {
-  stage: 'parsing' | 'schema' | 'api' | 'diagram' | 'complete' | null;
-  progress: number;
+  isVisible: boolean;
+  stage?: string | null;
+  progress?: number;
 }
 
-const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ stage, progress }) => {
-  const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = subscribeToServerStatus(setServerStatus);
-    return unsubscribe;
-  }, []);
-
-  const getStageInfo = (currentStage: string | null) => {
-    // If server is waking up, show that status instead
-    if (serverStatus?.isWakingUp) {
-      return {
-        icon: Wifi,
-        title: 'Server is waking up...',
-        description: 'The server was sleeping and is now starting up. This may take up to 60 seconds.',
-        color: 'text-amber-500',
-      };
-    }
-
-    // If server appears to be sleeping, show that status
-    if (serverStatus && !serverStatus.isAwake) {
-      return {
-        icon: AlertTriangle,
-        title: 'Connecting to server...',
-        description: 'The server may be sleeping. Attempting to wake it up...',
-        color: 'text-orange-500',
-      };
-    }
-    switch (currentStage) {
-      case 'parsing':
-        return {
-          icon: Brain,
-          title: 'Parsing Natural Language',
-          description: 'AI is analyzing your requirements...',
-          color: 'text-blue-500',
-        };
-      case 'schema':
-        return {
-          icon: FileText,
-          title: 'Generating JSON Schema',
-          description: 'Creating structured data definitions...',
-          color: 'text-green-500',
-        };
-      case 'api':
-        return {
-          icon: Globe,
-          title: 'Building API Endpoints',
-          description: 'Generating REST API specifications...',
-          color: 'text-purple-500',
-        };
-      case 'diagram':
-        return {
-          icon: Network,
-          title: 'Creating ERD Diagram',
-          description: 'Building entity relationship diagram...',
-          color: 'text-orange-500',
-        };
-      case 'complete':
-        return {
-          icon: FileText,
-          title: 'Complete!',
-          description: 'All components generated successfully.',
-          color: 'text-green-500',
-        };
-      default:
-        return {
-          icon: Loader2,
-          title: 'Processing...',
-          description: 'Please wait while we generate your schema.',
-          color: 'text-primary-500',
-        };
-    }
-  };
-
-  const stageInfo = getStageInfo(stage);
-  const Icon = stageInfo.icon;
+const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
+  isVisible,
+  stage,
+  progress = 0,
+}) => {
+  if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
-        <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="relative">
-              <Icon className={`w-16 h-16 ${stageInfo.color} ${stage !== 'complete' ? 'animate-spin' : ''}`} />
-              {stage !== 'complete' && (
-                <div className="absolute inset-0 w-16 h-16 border-4 border-secondary-200 border-t-primary-500 rounded-full animate-spin" />
-              )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-secondary-900/80 backdrop-blur-modern">
+      <div className="bg-white dark:bg-secondary-800 rounded-2xl shadow-lg border border-secondary-200 dark:border-secondary-700 p-8 max-w-sm w-full mx-4">
+        <div className="text-center space-y-6">
+          {/* Loading Animation */}
+          <div className="relative">
+            <div className="w-16 h-16 mx-auto bg-gradient-accent rounded-2xl flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
             </div>
-          </div>
-          
-          <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-            {stageInfo.title}
-          </h3>
-          
-          <p className="text-secondary-600 mb-6">
-            {stageInfo.description}
-          </p>
-          
-          <div className="w-full bg-secondary-200 rounded-full h-2 mb-2">
-            <div
-              className={`h-2 rounded-full transition-all duration-1000 ease-out ${
-                serverStatus?.isWakingUp ? 'bg-amber-500' : 
-                serverStatus && !serverStatus.isAwake ? 'bg-orange-500' : 
-                'bg-primary-600'
-              }`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          
-          <div className="text-sm text-secondary-500">
-            {serverStatus?.isWakingUp 
-              ? 'Waking up server...' 
-              : serverStatus && !serverStatus.isAwake 
-              ? 'Connecting to server...' 
-              : `${progress}% complete`}
+            <div className="absolute -inset-2 bg-primary-200 dark:bg-primary-800 rounded-3xl opacity-20 animate-pulse" />
           </div>
 
-          {/* Additional server status info */}
-          {(serverStatus?.isWakingUp || (serverStatus && !serverStatus.isAwake)) && (
-            <div className="mt-3 text-xs text-secondary-400 bg-secondary-50 rounded p-2">
-              <p>
-                💡 <strong>Free hosting tip:</strong> Our server sleeps after 15 minutes of inactivity 
-                to save resources. The first request wakes it up, which takes about 30-60 seconds.
-              </p>
+          {/* Status Text */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold text-secondary-900 dark:text-white">
+              {stage ? `${stage.charAt(0).toUpperCase() + stage.slice(1)}...` : 'Processing...'}
+            </h3>
+            <p className="text-sm text-secondary-600 dark:text-secondary-400">
+              Please wait while we generate your schema
+            </p>
+          </div>
+
+          {/* Progress Bar */}
+          {progress > 0 && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs text-secondary-500 dark:text-secondary-400">
+                <span>Progress</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="w-full bg-secondary-200 dark:bg-secondary-700 rounded-full h-2">
+                <div 
+                  className="bg-gradient-accent h-2 rounded-full transition-all duration-500 ease-out" 
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
           )}
         </div>
