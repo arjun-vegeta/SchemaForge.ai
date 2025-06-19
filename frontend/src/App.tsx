@@ -85,7 +85,7 @@ function AppContent() {
   useEffect(() => {
     document.documentElement.style.setProperty(
       '--bg-image', 
-      `url('${!isDarkMode ? '/Header-background.png' : '/Header-background-dark.png'}')`
+      `url('${!isDarkMode ? '/Header-background-light.svg' : '/Header-background-dark.svg'}')`
     );
   }, [isDarkMode]);
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Database, Moon, Sun, Menu, X } from 'lucide-react';
+import { RotateCcw, Moon, Sun, Menu, X } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface HeaderProps {
@@ -23,9 +23,12 @@ const Header: React.FC<HeaderProps> = ({ onReset, hasData }) => {
           {/* Logo and Title */}
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 w-12 h-12 bg-orange-500  rounded-xl shadow-sm">
-                <Database className=" sm:w-5 sm:h-5 w-6 h-6 text-white" />
-              </div>
+              <img
+                src={process.env.PUBLIC_URL + '/logo.svg'}
+                alt="SchemaForge Logo"
+                className="w-10 h-10 sm:w-10 sm:h-10 w-12 h-12 rounded-xl shadow-sm bg-white object-contain"
+                style={{ background: 'transparent' }}
+              />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-400 rounded-full animate-pulse" />
             </div>
             <div>
