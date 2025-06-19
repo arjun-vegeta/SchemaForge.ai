@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import Header from './components/Header';
@@ -51,6 +51,43 @@ function AppContent() {
 
     checkApiStatus();
   }, []);
+
+  // Add CSS for fixed background that works on mobile
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .app-container {
+        position: relative;
+        z-index: 1;
+      }
+      
+      .app-container::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: var(--bg-image);
+        background-repeat: no-repeat;
+        background-position: center top;
+        background-size: cover;
+        z-index: -1;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+  
+  // Set the background image variable based on theme
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--bg-image', 
+      `url('${!isDarkMode ? '/Header-background.png' : '/Header-background-dark.png'}')`
+    );
+  }, [isDarkMode]);
 
   const handleGenerate = useCallback(async (description: string) => {
     try {
@@ -203,24 +240,7 @@ function AppContent() {
   return (
     <div
       key={isDarkMode ? 'dark' : 'light'}
-      className="min-h-screen bg-gradient-minimal transition-all duration-300"
-      style={
-        !isDarkMode
-          ? {
-              backgroundImage: "url('/Header-background.png')",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center center",
-              backgroundSize: "cover",
-              backgroundAttachment: "fixed",
-            }
-          : {
-              backgroundImage: "url('/Header-background-dark.png')",
-              backgroundRepeat: "no-repeat", 
-              backgroundPosition: "center center",
-              backgroundSize: "cover",
-              backgroundAttachment: "fixed",
-            }
-      }
+      className="min-h-screen bg-gradient-minimal transition-all duration-300 app-container"
     >
       <Header onReset={handleReset} hasData={!!generationResult} />
       
