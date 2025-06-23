@@ -44,6 +44,16 @@ class SchemaController {
 
     } catch (error) {
       console.error('❌ Error generating schema:', error);
+      
+      // Check if it's an AI service overloaded error
+      if (error.message && error.message.includes('AI service is currently overloaded')) {
+        return res.status(503).json({
+          error: 'AI service temporarily unavailable',
+          message: error.message,
+          retryAfter: 'Please try again in a few minutes'
+        });
+      }
+      
       res.status(500).json({
         error: 'Failed to generate schema',
         message: error.message

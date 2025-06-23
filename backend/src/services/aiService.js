@@ -157,7 +157,15 @@ class AIService {
 
     } catch (error) {
       console.error('❌ AI Service Error:', error);
-      // Fallback to basic parsing
+      
+      // Check if it's a service overloaded error
+      if (error.message && error.message.includes('The model is overloaded')) {
+        console.log('🔧 Using basic parsing fallback');
+        throw new Error('AI service is currently overloaded. Please try again later.');
+      }
+      
+      // For other errors, fallback to basic parsing
+      console.log('🔧 Using basic parsing fallback');
       return this.basicParsing(description);
     }
   }

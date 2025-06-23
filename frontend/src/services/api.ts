@@ -105,8 +105,19 @@ const detectServerSleep = (error: any): boolean => {
     return true;
   }
   
-  // 502/503/504 errors often indicate server starting up
-  if (error.response?.status >= 502 && error.response?.status <= 504) {
+  // 502/504 errors often indicate server starting up, but not 503 AI service overloaded
+  if (error.response?.status === 502 || error.response?.status === 504) {
+    return true;
+  }
+  
+  // Don't retry on AI service overloaded (503 with specific message)
+  if (error.response?.status === 503 && 
+      error.response?.data?.message?.includes('AI service is currently overloaded')) {
+    return false;
+  }
+  
+  // Other 503 errors might be server sleep
+  if (error.response?.status === 503) {
     return true;
   }
   
