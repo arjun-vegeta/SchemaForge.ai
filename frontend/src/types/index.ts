@@ -132,12 +132,7 @@ export interface LoadingState {
   progress: number;
 }
 
-export interface ServerStatus {
-  isAwake: boolean;
-  isWakingUp: boolean;
-  lastActiveTime: number;
-  consecutiveFailures: number;
-}
+
 
 export type TabType = 'input' | 'schema' | 'api' | 'diagram' | 'export';
 

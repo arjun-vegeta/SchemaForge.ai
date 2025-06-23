@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Sparkles, AlertCircle, HelpCircle, Lightbulb, ChevronDown, ChevronUp, Zap, Target, BarChart3, Brain, FileJson, Network, GitBranch, Download } from 'lucide-react';
+import { Sparkles, AlertCircle, HelpCircle, Lightbulb, ChevronDown, ChevronUp, Zap, Brain, FileJson, Network, GitBranch, Download } from 'lucide-react';
 import { ApiError } from '../types';
 import { utils } from '../services/api';
 
@@ -48,7 +48,7 @@ const InputForm: React.FC<InputFormProps> = ({
             Transform Ideas into
             <span className="text-orange-600 dark:text-orange-500 text-4xl sm:text-5xl block mt-2">
               Database Schemas
-              <Zap className="w-10 h-10 text-orange-600 dark:text-orange-500 inline-block ml-2 align-middle translate-y-[-6px] stroke-[3]" />
+              <Zap className="w-8 h-8 sm:w-10 sm:h-10 text-orange-600 dark:text-orange-500 inline-block ml-2 align-middle translate-y-[-6px] stroke-[3]" />
             </span>
           </h1>
           <p className="text-base text-secondary-600 dark:text-secondary-300 max-w-2xl mx-auto leading-relaxed">

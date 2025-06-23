@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle, Circle, Loader2, Brain, FileJson, Network, GitBranch, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, Circle, Loader2, Brain, FileJson, Network, GitBranch, Sparkles, Clock, Server } from 'lucide-react';
 
 interface LoadingOverlayProps {
   isVisible: boolean;
@@ -12,6 +12,22 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   stage,
   progress = 0,
 }) => {
+  const [showTimeoutMessage, setShowTimeoutMessage] = useState(false);
+
+  // Show timeout message after 10 seconds
+  useEffect(() => {
+    if (!isVisible) {
+      setShowTimeoutMessage(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowTimeoutMessage(true);
+    }, 10000); // 10 seconds
+
+    return () => clearTimeout(timer);
+  }, [isVisible]);
+
   if (!isVisible) return null;
 
   const stages = [
@@ -85,6 +101,24 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             </div>
           </div>
 
+          {/* Timeout Message */}
+          {showTimeoutMessage && (
+            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 animate-slide-up">
+              <div className="flex items-start space-x-3">
+                <Server className="w-5 h-5 text-orange-500 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-sm font-semibold text-orange-800 dark:text-orange-200 mb-1">
+                    Taking longer than usual?
+                  </h4>
+                  <p className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
+                    We're using Render's free tier for hosting. The server automatically sleeps after 15 minutes of inactivity. 
+                    The first request might take up to 1 minute to wake up the server. Please wait, your request is being processed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Progress Overview */}
           <div className="bg-secondary-50 dark:bg-secondary-900/50 rounded-lg p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
@@ -120,9 +154,6 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
                       : 'bg-transparent'
                   }`}
                 >
-                  {/* Vertical Progress Line */}
-                  {/* The vertical progress line has been removed */}
-                  
                   {/* Stage Icon */}
                   <div className={`relative z-10 flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                     status === 'completed'

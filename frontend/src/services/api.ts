@@ -1,222 +1,58 @@
 import axios from 'axios';
-import { GenerationResult, ApiError } from '../types';
+import { GenerationResult } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
 
-// Server status types
-export interface ServerStatus {
-  isAwake: boolean;
-  isWakingUp: boolean;
-  lastActiveTime: number;
-  consecutiveFailures: number;
-}
-
-// Global server status
-let serverStatus: ServerStatus = {
-  isAwake: true,
-  isWakingUp: false,
-  lastActiveTime: Date.now(),
-  consecutiveFailures: 0,
-};
-
-// Background health check
-let healthCheckInterval: NodeJS.Timeout | null = null;
-
-const startBackgroundHealthCheck = () => {
-  if (healthCheckInterval) return; // Already running
-  
-  healthCheckInterval = setInterval(async () => {
-    // Only check if server is not awake or waking up
-    if (!serverStatus.isAwake || serverStatus.isWakingUp) {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/health`, { timeout: 10000 });
-        if (response.status === 200) {
-          console.log('🟢 Background health check: Server is responding');
-          serverStatus.isAwake = true;
-          serverStatus.isWakingUp = false;
-          serverStatus.consecutiveFailures = 0;
-          serverStatus.lastActiveTime = Date.now();
-          notifyStatusChange();
-        }
-      } catch (error) {
-        console.log('🔍 Background health check: Server still not responding');
-      }
-    }
-  }, 5000); // Check every 5 seconds when server is down
-};
-
-const stopBackgroundHealthCheck = () => {
-  if (healthCheckInterval) {
-    clearInterval(healthCheckInterval);
-    healthCheckInterval = null;
-  }
-};
-
-// Status change listeners
-const statusListeners: Array<(status: ServerStatus) => void> = [];
-
-export const subscribeToServerStatus = (listener: (status: ServerStatus) => void) => {
-  statusListeners.push(listener);
-  // Immediately notify with current status
-  listener({ ...serverStatus });
-  
-  // Return unsubscribe function
-  return () => {
-    const index = statusListeners.indexOf(listener);
-    if (index > -1) {
-      statusListeners.splice(index, 1);
-    }
-  };
-};
-
-const notifyStatusChange = () => {
-  statusListeners.forEach(listener => listener({ ...serverStatus }));
-};
-
-// Sleep detection parameters
-const SLEEP_TIMEOUT = 30000; // 30 seconds to detect likely sleep
-const WAKE_UP_TIMEOUT = 120000; // 2 minutes max wake-up time
-const MAX_RETRIES = 8; // Maximum retry attempts during wake-up
-const RETRY_DELAYS = [1000, 2000, 3000, 5000, 8000, 12000, 15000, 20000]; // Progressive delays
-
-// Create axios instance with enhanced config
+// Create axios instance with basic config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: SLEEP_TIMEOUT,
+  timeout: 30000, // 30 seconds timeout
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Enhanced sleep/wake detection
-const detectServerSleep = (error: any): boolean => {
-  // Network timeout or connection error patterns that suggest server sleep
-  if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR') {
-    return true;
-  }
-  
-  // Axios timeout
-  if (error.message?.includes('timeout')) {
-    return true;
-  }
-  
-  // Connection refused or similar
-  if (error.message?.includes('connect') || error.message?.includes('ECONNREFUSED')) {
-    return true;
-  }
-  
-  // 502/504 errors often indicate server starting up, but not 503 AI service overloaded
-  if (error.response?.status === 502 || error.response?.status === 504) {
-    return true;
-  }
-  
-  // Don't retry on AI service overloaded (503 with specific message)
-  if (error.response?.status === 503 && 
-      error.response?.data?.message?.includes('AI service is currently overloaded')) {
-    return false;
-  }
-  
-  // Other 503 errors might be server sleep
-  if (error.response?.status === 503) {
-    return true;
-  }
-  
-  return false;
-};
-
-// Enhanced retry with exponential backoff
-const retryWithBackoff = async <T>(
+// Simple retry function for failed requests
+const retryRequest = async <T>(
   operation: () => Promise<T>,
-  maxRetries: number = MAX_RETRIES,
-  retryDelays: number[] = RETRY_DELAYS,
-  operationName: string = 'API call'
+  maxRetries: number = 3,
+  delay: number = 1000
 ): Promise<T> => {
   let lastError: any;
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const result = await operation();
-      
-      // Success! Update server status
-      if (serverStatus.isWakingUp || !serverStatus.isAwake) {
-        console.log('🟢 Server is now awake and responding');
-        serverStatus.isAwake = true;
-        serverStatus.isWakingUp = false;
-        serverStatus.consecutiveFailures = 0;
-        serverStatus.lastActiveTime = Date.now();
-        notifyStatusChange();
-        stopBackgroundHealthCheck(); // Stop monitoring since server is responding
-      }
-      
-      return result;
+      return await operation();
     } catch (error: any) {
       lastError = error;
-      const isLikelySleep = detectServerSleep(error);
       
-      console.log(`❌ ${operationName} attempt ${attempt + 1}/${maxRetries + 1} failed:`, {
-        error: error.message,
-        isLikelySleep,
-        willRetry: attempt < maxRetries
-      });
-      
-             // Update server status on first failure
-      if (attempt === 0 && isLikelySleep) {
-        serverStatus.consecutiveFailures++;
-        
-        if (serverStatus.isAwake) {
-          console.log('😴 Server appears to be sleeping, starting wake-up process...');
-          serverStatus.isAwake = false;
-          serverStatus.isWakingUp = true;
-          notifyStatusChange();
-          startBackgroundHealthCheck(); // Start monitoring for when server comes back
-        }
+      // Don't retry on AI service overloaded (503 with specific message)
+      if (error.response?.status === 503 && 
+          error.response?.data?.message?.includes('AI service is currently overloaded')) {
+        throw error;
       }
       
-      // Don't retry if it's not a sleep-related error
-      if (!isLikelySleep && attempt === 0) {
+      // Don't retry on client errors (4xx) or successful server responses
+      if (error.response?.status >= 400 && error.response?.status < 500) {
         throw error;
       }
       
       // Don't retry on last attempt
       if (attempt === maxRetries) {
-        console.log('💀 Max retries reached, server may be down');
-        serverStatus.isWakingUp = false;
-        serverStatus.consecutiveFailures = maxRetries + 1;
-        notifyStatusChange();
         break;
       }
       
-      // Wait before next retry
-      const delay = retryDelays[attempt] || retryDelays[retryDelays.length - 1];
-      console.log(`⏳ Waiting ${delay}ms before retry ${attempt + 2}/${maxRetries + 1}...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      // Wait before retry (only for network errors or 5xx server errors)
+      await new Promise(resolve => setTimeout(resolve, delay * (attempt + 1)));
     }
   }
   
   throw lastError;
 };
 
-// Response interceptor for enhanced error handling
-apiClient.interceptors.response.use(
-  (response) => {
-    // Success - update server status if needed
-    if (!serverStatus.isAwake || serverStatus.isWakingUp) {
-      serverStatus.isAwake = true;
-      serverStatus.isWakingUp = false;
-      serverStatus.consecutiveFailures = 0;
-      serverStatus.lastActiveTime = Date.now();
-      notifyStatusChange();
-    }
-    return response;
-  },
-  (error) => {
-    // Let the retry logic handle this
-    throw error;
-  }
-);
-
+// API service object
 export const apiService = {
-  // Enhanced health check with retry
+  // Health check
   async healthCheck(): Promise<{ 
     status: string; 
     message: string;
@@ -225,90 +61,50 @@ export const apiService = {
       message: string;
     };
   }> {
-    return retryWithBackoff(
-      async () => {
-        const response = await apiClient.get('/health');
-        return response.data;
-      },
-      3, // Fewer retries for health check
-      [1000, 3000, 5000],
-      'Health check'
-    );
+    return retryRequest(async () => {
+      const response = await apiClient.get('/health');
+      return response.data;
+    });
   },
 
-  // Generate schema with enhanced retry logic
+  // Generate schema with retry
   async generateSchema(description: string): Promise<GenerationResult> {
-    return retryWithBackoff(
-      async () => {
-        const response = await apiClient.post('/schema/generate', {
-          description: description.trim(),
-        });
-        return response.data;
-      },
-      MAX_RETRIES,
-      RETRY_DELAYS,
-      'Schema generation'
-    );
+    return retryRequest(async () => {
+      const response = await apiClient.post('/schema/generate', {
+        description: description.trim(),
+      });
+      return response.data;
+    });
   },
 
   // Validate a JSON schema with retry
   async validateSchema(schema: any): Promise<{ valid: boolean; errors: any[] }> {
-    return retryWithBackoff(
-      async () => {
-        const response = await apiClient.post('/schema/validate', {
-          schema,
-        });
-        return response.data;
-      },
-      5, // Medium retry count for validation
-      [1000, 2000, 4000, 8000, 12000],
-      'Schema validation'
-    );
+    return retryRequest(async () => {
+      const response = await apiClient.post('/schema/validate', {
+        schema,
+      });
+      return response.data;
+    });
   },
 
   // Generate API endpoints with retry
   async generateApiEndpoints(entities: any): Promise<any> {
-    return retryWithBackoff(
-      async () => {
-        const response = await apiClient.post('/schema/api-endpoints', {
-          entities,
-        });
-        return response.data;
-      },
-      MAX_RETRIES,
-      RETRY_DELAYS,
-      'API endpoints generation'
-    );
+    return retryRequest(async () => {
+      const response = await apiClient.post('/schema/api-endpoints', {
+        entities,
+      });
+      return response.data;
+    });
   },
 
   // Generate ERD diagram with retry
   async generateErdDiagram(entities: any): Promise<any> {
-    return retryWithBackoff(
-      async () => {
-        const response = await apiClient.post('/schema/erd', {
-          entities,
-        });
-        return response.data;
-      },
-      MAX_RETRIES,
-      RETRY_DELAYS,
-      'ERD diagram generation'
-    );
-  },
-
-  // Get current server status
-  getServerStatus(): ServerStatus {
-    return { ...serverStatus };
-  },
-
-  // Manual server wake-up ping
-  async pingServer(): Promise<boolean> {
-    try {
-      await this.healthCheck();
-      return true;
-    } catch (error) {
-      return false;
-    }
+    return retryRequest(async () => {
+      const response = await apiClient.post('/schema/erd', {
+        entities,
+      });
+      return response.data;
+    });
   },
 };
 
@@ -441,16 +237,11 @@ export const utils = {
     return { valid: true };
   },
 
-  // Extract entities from description (basic keyword detection)
+  // Extract keywords from description
   extractKeywords(description: string): string[] {
-    const keywords = description.toLowerCase().match(/\b\w+\b/g) || [];
-    const entityKeywords = keywords.filter(word => 
-      word.length > 3 && 
-      !['with', 'and', 'the', 'for', 'from', 'that', 'this', 'have', 'need', 'want', 'create', 'build', 'design', 'system', 'platform', 'application'].includes(word)
-    );
-    
-    // Remove duplicates and return
-    return Array.from(new Set(entityKeywords));
+    const words = description.toLowerCase().split(/\s+/);
+    const keywords = words.filter(word => word.length > 3);
+    return Array.from(new Set(keywords));
   },
 
   // Format file size
@@ -460,7 +251,7 @@ export const utils = {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  },
+  }
 };
 
 export default apiService; 

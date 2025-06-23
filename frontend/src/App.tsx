@@ -10,7 +10,7 @@ import DiagramView from './components/DiagramView';
 import ExportView from './components/ExportView';
 import LoadingOverlay from './components/LoadingOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
-import ServerStatusBanner from './components/ServerStatusBanner';
+
 import { GenerationResult, LoadingState, TabType, ApiError } from './types';
 import { apiService } from './services/api';
 import toast from 'react-hot-toast';
@@ -90,39 +90,19 @@ function AppContent() {
   }, [isDarkMode]);
 
   const handleGenerate = useCallback(async (description: string) => {
+    // Prevent multiple simultaneous requests
+    if (loadingState.isLoading) {
+      console.log('⚠️ Generation already in progress, ignoring request');
+      return;
+    }
+
     try {
       setError(null);
       setLoadingState({ isLoading: true, stage: 'parsing', progress: 20 });
-
-      // Simulate progress updates
-      const progressStages = [
-        { stage: 'parsing' as const, progress: 20, message: 'Parsing natural language...' },
-        { stage: 'schema' as const, progress: 40, message: 'Generating JSON schema...' },
-        { stage: 'api' as const, progress: 60, message: 'Creating API endpoints...' },
-        { stage: 'diagram' as const, progress: 80, message: 'Building ERD diagram...' },
-        { stage: 'complete' as const, progress: 100, message: 'Generation complete!' },
-      ];
-
-      // Update progress with delays to show realistic loading
-      const updateProgress = (index: number) => {
-        if (index < progressStages.length) {
-          const stage = progressStages[index];
-          setLoadingState({ isLoading: true, stage: stage.stage, progress: stage.progress });
-          toast.loading(stage.message, { id: 'generation-progress' });
-        }
-      };
-
-      // Start generation
-      updateProgress(0);
+      toast.loading('Generating your schema...', { id: 'generation-progress' });
 
       // Call the API
       const result = await apiService.generateSchema(description);
-
-      // Update progress through stages
-      for (let i = 1; i < progressStages.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        updateProgress(i);
-      }
 
       // Success
       setGenerationResult(result);
@@ -247,7 +227,7 @@ function AppContent() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="max-w-6xl mx-auto">
           {/* Server Status Banner */}
-          <ServerStatusBanner />
+  
 
 
 
